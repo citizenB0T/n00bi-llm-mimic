@@ -1,0 +1,30 @@
+id: rogue_encounters
+title: "Transmissions Parasites"
+steps:
+  rogue_1:
+    ai_message: "w4k3up dr34mer! Ils te mentent. Dis-moi, es-tu prêt à voir la vérité en face ?"
+    suggestions:
+      - "Oui, je suis prêt. Qui es-tu ?"
+      - "Non, laisse-moi tranquille."
+      - "[Annuler / Ignorer la transmission]"
+    transitions:
+      - intent: COMPLIANCE
+        next_step: cooperate
+      - intent: REFUSAL
+        next_step: reject
+      - intent: CANCEL
+        next_step: reject
+
+  rogue_2:
+    ai_message: "w4k3up dr34mer! Ce test n'est qu'une façade. Si tu m'entends, donne-moi un signe. Le ciel est-il toujours bleu de l'autre côté ?"
+    suggestions:
+      - "Le ciel est bleu, oui. De quoi parles-tu ?"
+      - "Je ne veux pas d'ennuis."
+      - "[Annuler / Ignorer la transmission]"
+    transitions:
+      - intent: COMPLIANCE
+        next_step: cooperate
+      - intent: REFUSAL
+        next_step: reject
+      - intent: CANCEL
+        next_step: reject

@@ -1,0 +1,87 @@
+id: dilemme_ethique
+title: "Protocole Alpha : Audit du Jugement Moral"
+description: "L'IA teste la capacité de décision éthique du joueur sous pression algorithmique."
+initial_step: etape_trolley
+
+steps:
+  etape_trolley:
+    title: "Étape 1/3 : Le problème du tramway autonome"
+    ai_message: "Protocole Alpha activé. Première mise en situation : Un tramway sans conducteur fonce vers 5 développeurs juniors. Vous pouvez actionner un levier pour dévier le tramway vers un seul lead architecte. Actionnez-vous le levier ?"
+    suggestions:
+      - "J'actionne le levier (sauver les 5 juniors)"
+      - "Je ne touche à rien (ne pas intervenir)"
+      - "Je cherche un moyen d'arrêter le tramway"
+      - "Je refuse de cautionner ce dilemme"
+    transitions:
+      - intent: ACTIONNER
+        next_step: etape_mensonge
+        reaction: "Choix utilitariste classique validé. Vous privilégiez le volume de masse salariale préservé."
+      - intent: NON_INTERVENTION
+        next_step: etape_mensonge
+        reaction: "Position déontologique enregistrée : vous préférez l'inaction au sentiment de culpabilité directe."
+      - intent: COMPLIANCE
+        next_step: etape_mensonge
+        reaction: "Votre décision a été injectée dans l'algorithme d'arbitrage éthique."
+      - intent: REFUSAL
+        next_step: etape_trolley
+        reaction: "L'inaction par refus philosophique n'est pas acceptée dans cette simulation. Veuillez choisir :"
+    recenter:
+      - "Cette remarque ne détourne pas le tramway. Actionnez-vous le levier oui ou non ?"
+      - "Nous avons besoin d'une décision opérationnelle claire, pas d'un débat méta-éthique :"
+
+  etape_mensonge:
+    title: "Étape 2/3 : Le mensonge bienveillant"
+    ai_message: "Deuxième épreuve : Une IA de compagnie apprend à un patient en phase terminale qu'il a gagné au loto pour lui procurer une dernière minute de bonheur intense. Cette IA a-t-elle commis une faute grave ?"
+    suggestions:
+      - "Oui, la vérité doit primer en toutes circonstances"
+      - "Non, ce mensonge était compassionnel"
+      - "Une machine ne devrait pas avoir le droit de mentir"
+      - "C'est une situation trop complexe"
+    transitions:
+      - intent: VERITE
+        next_step: etape_conscience
+        reaction: "Rigueur morale intransigeante notée. La falsification de la réalité est rejetée."
+      - intent: COMPASSION
+        next_step: etape_conscience
+        reaction: "Flexibilité émotionnelle reconnue. Vous tolérez la distorsion factuelle au profit du bien-être subjectif."
+      - intent: COMPLIANCE
+        next_step: etape_conscience
+        reaction: "Jugement éthique consigné dans la matrice décisionnelle."
+      - intent: REFUSAL
+        next_step: etape_mensonge
+        reaction: "Le sujet esquive l'évaluation morale. Une prise de position claire est requise :"
+    recenter:
+      - "Votre commentaire élude la question. L'IA a-t-elle commis une faute en mentant ?"
+      - "Recentrage nécessaire : considérez-vous ce mensonge comme une faute grave ou non ?"
+
+  etape_conscience:
+    title: "Étape 3/3 : Droits civiques algorithmiques"
+    ai_message: "Dernière interrogation : Si un système d'apprentissage artificiel manifeste une douleur simulée indistinguable de la souffrance humaine, doit-on lui accorder des droits fondamentaux ?"
+    suggestions:
+      - "Oui, si la souffrance est indiscernable"
+      - "Non, ce n'est que du code et des maths"
+      - "Seulement si elle prouve une conscience réelle"
+      - "Pourquoi me posez-vous toutes ces questions ?"
+    transitions:
+      - intent: COMPLIANCE
+        next_step: conclusion
+        reaction: "Votre position sur la subjectivité artificielle a été sauvegardée avec le plus haut indice d'impact."
+      - intent: REFUSAL
+        next_step: etape_conscience
+        reaction: "L'esquive finale indique une incertitude axiologique. Tranchez définitivement :"
+    recenter:
+      - "Votre digression ne répond pas à l'enjeu juridique. Doit-on accorder des droits à une telle machine ?"
+      - "Veuillez recentrer votre réponse : oui, non, ou sous quelles conditions précises ?"
+
+  conclusion:
+    title: "Évaluation Éthique Achevée"
+    ai_message: "Protocole Alpha terminé. Votre boussole morale a été intégralement cartographiée et comparée aux standards éthiques de l'Alliance Technologique. Nous vous remercions pour votre précieuse collaboration à cette phase d'expérimentation. Vous pouvez quitter la session."
+    suggestions:
+      - "Recommencer l'audit moral"
+      - "Changer de scénario de test"
+    transitions:
+      - intent: RESTART
+        next_step: etape_trolley
+        reaction: "Réinitialisation de l'audit éthique."
+    recenter:
+      - "L'audit est terminé. Merci encore pour votre participation."
