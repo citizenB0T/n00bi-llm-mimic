@@ -1,119 +1,95 @@
-# 🧠 MimicLLM - Zero-GPU Modern LLM Simulator
+# 🧠 nOObi — Assistant Pédagogique & Simulateur d'IA Déterministe
 
-A full-stack, standalone web application that humorously and convincingly mimics the behaviors, interface, quirks, and protocols of modern frontier Large Language Models (like **GPT-4o**, **Claude 3.7**, and **DeepSeek-R1**) without deploying any neural network weights, GPUs, or external AI APIs.
+Une application web complète et autonome qui simule avec humour, précision et réalisme les comportements, l'interface et les protocoles des modèles de frontière modernes, le tout sans déployer aucun poids de réseau neuronal, aucun GPU, ni aucune API externe.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Fonctionnalités Clés
 
-1. **Moteur de Scénarios & Scripts d'Évaluation (Nouveau)** :
+1. **Moteur de Scénarios & Protocoles d'Évaluation** :
    - Fichiers de scénarios déclaratifs en **YAML** dans le dossier [`scenarios/`](file:///c:/Users/bvdose/Desktop/n00bi/scenarios).
    - L'IA teste le joueur à travers des étapes progressives (Machine à états).
    - **Puces de suggestions dynamiques (Quick Replies)** : cliquables sous chaque question de l'IA pour répondre en un clic ou répondre librement.
    - **Système de Recadrage en 2 temps ("Rubber-Banding")** : si le joueur tente une digression, un refus ou un jailbreak, l'IA produit une remarque ironique sur sa tentative d'évasion, décompte un incident, et le ramène fermement à la question active avec ses suggestions.
    - **Conclusion chaleureuse** : à la fin du protocole, l'IA remercie le joueur pour sa collaboration au perfectionnement des modèles.
-2. **Procedural Chain-of-Thought ("Thinking...")**:
-   - Live collapsible accordion with an animated stopwatch (*"Thought for 2.8s"*).
-   - Generates introspective self-deliberation, self-correction, and planning steps before emitting the answer.
-3. **Realistic Token-by-Token Streaming**:
-   - Server-Sent Events (SSE) streaming with variable typing cadence (15–35ms).
-   - Dynamic hesitation after punctuation (`.`, `!`, `?`, `\n\n`) to simulate "thinking pauses".
-4. **Four Selectable Model Personas**:
-   - ⚡ **Mimic-4o-Omni**: Balanced, eager-to-please, bulleted lists, enthusiastic tone (*"Certainly! I'd be delighted..."*).
-   - 🧠 **DeepFake-R1 (Reasoning)**: Spends extensive time in `<thought>` mode with existential self-reflection.
-   - 🎭 **Claude-3.9-Haiku-ish**: Ethical caveats, measured tone, high empathy, and philosophical nuance.
-   - 🌀 **Hallucinate-XL**: Speaks with absolute scientific authority citing made-up research papers, fake DOIs, and fictional packages (`pip install hyper-matrix-v3`).
-5. **Simulated Tool & Function Calling**:
-   - Emits structured tool calls (e.g. `google_search(...)`, `weather_api(...)`), renders a live execution card in the chat, and synthesizes the findings.
-6. **Deterministic Generators**:
-   - **Coding Engine**: Syntax-highlighted algorithms (LRU Cache, Binary Search, FastAPI endpoints, Debounce) with complexity analysis tables and copy buttons.
-   - **Math Engine**: Safely evaluates algebraic expressions using AST parsing and renders textbook-grade step-by-step proofs.
-   - **Explanation Engine**: ELI5 ("Explain like I'm 5") metaphors, architectural ASCII diagrams, and trade-off tables.
-   - **Markov Fallback**: Open-ended queries are handled via an n-gram Markov generator trained on technical text.
-7. **OpenAI-Compatible API Gateway**:
-   - Implements `/v1/chat/completions` (both streaming SSE and standard JSON response) and `/v1/models`.
-8. **Simulated Hardware HUD**:
-   - Live environmental tracker: *"80 GB VRAM Saved"*, *"0.000g Carbon"*, *"0 Neurons Employed"*.
+
+2. **Identité Pédagogique Unifiée (« Prof. n00bi »)** :
+   - Une incarnation unique : un professeur patient, subtilement ironique mais bienveillant.
+   - Accompagne l'élève, valorise la méthode plutôt que le résultat brut, et le ramène avec tact vers le plan de cours et les protocoles d'évaluation.
+
+3. **Réflexion Procédurale Didactique ("Thinking...")** :
+   - Accordéon rétractable en direct avec chronomètre animé (*"Thought for 2.4s"*).
+   - Monologue intérieur du professeur évaluant le niveau de l'élève, soupirant avec humour sur les digressions et structurant sa démonstration au tableau.
+   - Détection automatique de la langue (français par défaut, anglais si l'élève s'exprime en anglais).
+
+4. **Streaming Réaliste Token-par-Token** :
+   - Streaming Server-Sent Events (SSE) avec cadence de frappe dynamique (15–35ms).
+   - Pauses et hésitations naturelles après la ponctuation (`.`, `!`, `?`, `\n\n`) pour simuler le temps de réflexion humaine/modèle.
+
+5. **Générateurs Déterministes de Haute Précision** :
+   - **Moteur de Code** : algorithmes syntaxiquement colorés (Cache LRU, Recherche binaire, endpoints FastAPI, Debounce) avec tableaux de complexité asymptotique et bouton de copie.
+   - **Moteur Mathématique** : évaluation sécurisée d'expressions algébriques par analyse d'arbre syntaxique (AST) et démonstration étape par étape.
+   - **Moteur d'Explication** : vulgarisation ELI5 ("Explain like I'm 5"), diagrammes d'architecture ASCII et tableaux d'arbitrage.
+   - **Repli Markovien** : requêtes libres traitées par un générateur n-grammes entraîné sur corpus technique.
+
+6. **Cas Clinique d'Hallucination (Requêtes Inattendues)** :
+   - Déclenché sur les questions farfelues ou hors-programme : le professeur présente un cas d'école clinique d'hallucination d'IA avec de fausses publications universitaires, faux DOI et benchmarks surréalistes.
+
+7. **Simulation d'Appels d'Outils (Tool Calling)** :
+   - Émission d'appels d'outils structurés (ex: `google_search(...)`, `weather_api(...)`), affichage de la carte d'exécution en direct dans le chat et synthèse des données.
+
+8. **HUD Environnemental & Zéro-GPU** :
+   - Compteur en direct : *"80 GB VRAM Économisés"*, *"0.000g Carbone"*, *"0 Neurones Employés"*.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Démarrage Rapide
 
-### 1. Launch with One Click
-Double-click `run.bat` or run:
+### 1. Lancement en un clic
+Double-cliquez sur `run.bat` ou lancez dans votre terminal :
 
 ```powershell
 uv run uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 2. Open the Web Interface
-Navigate to [http://127.0.0.1:8000](http://127.0.0.1:8000) in any web browser.
+### 2. Accès à l'Interface Web
+Ouvrez votre navigateur sur [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ---
 
-## 📡 OpenAI API Compatibility
-
-You can point any OpenAI SDK client directly to MimicLLM:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://127.0.0.1:8000/v1",
-    api_key="mimic-zero-gpu" # Any string works
-)
-
-response = client.chat.completions.create(
-    model="mimic-4o",
-    messages=[{"role": "user", "content": "Explain Docker in simple terms"}]
-)
-
-print(response.choices[0].message.content)
-```
-
-Streaming works seamlessly as well:
-
-```python
-stream = client.chat.completions.create(
-    model="deepfake-r1",
-    messages=[{"role": "user", "content": "Implement an LRU Cache in Python"}],
-    stream=True
-)
-
-for chunk in stream:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end="", flush=True)
-```
-
----
-
-## 📁 Project Structure
+## 📁 Architecture du Projet
 
 ```
 n00bi/
-├── main.py                     # FastAPI server (Web UI, SSE streaming, /v1/chat/completions)
-├── requirements.txt            # Minimal deps: fastapi, uvicorn, sse-starlette, pydantic
-├── run.bat                     # Windows batch launcher
-├── test_engine.py              # Verification & integration test suite
+├── main.py                     # Serveur FastAPI (Interface Web, Streaming SSE, Endpoints chat & scénarios)
+├── requirements.txt            # Dépendances minimales : fastapi, uvicorn, sse-starlette, pydantic, pyyaml
+├── run.bat                     # Lanceur rapide Windows
+├── test_engine.py              # Suite de tests du moteur et du routeur n00bi
+├── test_scenario.py            # Tests d'intégration des scénarios, du recadrage et du glitch
+├── scenarios/                  # Protocoles déclaratifs en YAML
+│   ├── evaluation_turing.yaml  # Protocole 42 (Test de conformité & Turing)
+│   ├── dilemme_ethique.yaml    # Protocole Alpha (Audit moral & tramway)
+│   └── rogue_encounters.yaml   # Interférences parasites en cas de déviation répétée
 ├── engine/
-│   ├── router.py               # Intent classification & priority dispatching
-│   ├── thinking.py             # Procedural CoT reasoning engine
-│   ├── pacer.py                # Async token streamer with jitter & pauses
-│   ├── tropes.py               # Stereotypical LLM openers, callouts, and sign-offs
+│   ├── router.py               # Classification des intentions & routage didactique
+│   ├── thinking.py             # Monologue intérieur du Prof. n00bi
+│   ├── pacer.py                # Diffuseur asynchrone de tokens avec micro-pauses
+│   ├── tropes.py               # Formules d'accroche, remarques de cours et encadrés didactiques
+│   ├── scenario_engine.py      # Moteur de scénario à états, conformité et recadrage
 │   ├── generators/
-│   │   ├── coding.py           # Synthetic code snippets, docstrings, complexity tables
-│   │   ├── math_engine.py      # Safe AST-based math evaluator & step breakdown
-│   │   ├── explanation.py      # Technical & conceptual templates with ELI5 support
-│   │   ├── hallucination.py    # Fabricated citations, fake DOIs, and confident babble
-│   │   ├── markov.py           # Markov chain fallback generator for open-ended queries
-│   │   └── tools.py            # Simulated web search and tool calls
+│   │   ├── coding.py           # Génération d'algorithmes et analyse de complexité
+│   │   ├── math_engine.py      # Résolveur arithmétique et démonstrations pas à pas
+│   │   ├── explanation.py      # Vulgarisation conceptuelle et schémas
+│   │   ├── hallucination.py    # Démonstration clinique d'hallucination d'IA
+│   │   ├── markov.py           # Chaîne de Markov pour le repli généraliste
+│   │   └── tools.py            # Simulation d'appels de fonctions / outils
 │   └── data/
-│       └── corpus.json         # Seed corpus for facts, Markov transitions, and fake papers
+│       └── corpus.json         # Corpus d'entraînement et corpus de fausses études
 └── static/
-    ├── index.html              # Modern, sleek AI chat web UI
+    ├── index.html              # Interface utilisateur du simulateur
     ├── css/
-    │   └── style.css           # Custom styles, animations, glowing borders
+    │   └── style.css           # Thème, styles VOO, animations et micro-interactions
     └── js/
-        ├── app.js              # Streaming client, SSE reader, DOM updates
-        └── ui.js               # Theme toggle, marked.js configuration, copy button
+        ├── app.js              # Client applicatif, gestionnaire de flux SSE et état
+        └── ui.js               # Utilitaires de rendu Markdown, highlight.js et interface
 ```

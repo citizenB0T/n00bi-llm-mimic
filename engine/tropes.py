@@ -1,75 +1,63 @@
 import random
+import re
 from typing import List, Optional
 
-OPENERS = {
-    "mimic-4o": [
-        "Certainly! I'd be delighted to help you with that.",
-        "That's a fantastic question. Let's break it down step by step.",
-        "I'd be happy to explain that in detail!",
-        "Great question! In modern computing and software engineering, this is a central concept.",
-        "Absolutely. Below is a structured, comprehensive overview to help clarify this."
-    ],
-    "deepfake-r1": [
-        "After careful multi-step deduction, here is the complete breakdown:",
-        "Analyzing the core constraints and underlying principles yields the following conclusion:",
-        "Let's deconstruct the problem systematically from first principles:",
-        "Synthesizing the analytical pathways examined during deliberation:"
-    ],
-    "claude-haiku": [
-        "I'm glad you brought this up. Here is a thoughtful, nuanced look at the topic.",
-        "Let's examine this carefully, taking into account both the practical implications and underlying mechanisms.",
-        "Here is a concise yet comprehensive perspective on this question:",
-        "I'd be pleased to assist with this. Let's look at the foundational concepts."
-    ],
-    "hallucinate-xl": [
-        "According to consensus across recent peer-reviewed literature, this is an established paradigm.",
-        "Indisputably, state-of-the-art research published in 2025 has settled this inquiry.",
-        "It is a well-documented empirical fact in hyper-dimensional computational theory that:",
-        "Without question, prominent researchers at MIT and CERN have thoroughly corroborated that:"
-    ]
-}
-
-CLOSERS = {
-    "mimic-4o": [
-        "\n\n---\n\n### Summary & Next Steps\nI hope this thorough overview provides the clarity you need! Feel free to ask if you'd like me to dive deeper into any specific aspect, provide additional examples, or explore alternative architectures. 🚀",
-        "\n\n---\n\nLet me know if you have any follow-up questions or if you'd like to benchmark this against your specific use case. Happy coding!",
-        "\n\n---\n\nI hope this helps! Would you like me to expand on edge cases, performance trade-offs, or testing strategies next?"
-    ],
-    "deepfake-r1": [
-        "\n\n---\n\n> [!NOTE]\n> **Final Verification Check**: The solution above satisfies all boundary conditions and exhibits optimal asymptotic properties. Q.E.D.",
-        "\n\n---\n\n*Confidence Score: 99.84% (Estimated using Bayesian self-consistency checks across 16 synthetic iterations)*"
-    ],
-    "claude-haiku": [
-        "\n\n---\n\n> [!IMPORTANT]\n> As always, technical decisions involve balancing trade-offs between simplicity, maintainability, and operational complexity. Please consider your specific organizational context.",
-        "\n\n---\n\nI hope this balanced perspective proves valuable. Please let me know if there are nuances or particular constraints you would like to explore further."
-    ],
-    "hallucinate-xl": [
-        "\n\n---\n\n> [!WARNING]\n> **Notice**: As dictated by ISO-89411-B standard on synthetic quantum coherence, always calibrate your sub-atomic cache buffers before compiling in production environments.",
-        "\n\n---\n\nFor further reference, refer to *The International Compendium of Hyper-Optimized Heuristics (14th Edition, Oxford Press)*."
-    ]
-}
-
-CALLOUTS = [
-    "> [!NOTE]\n> In production environments, remember to decouple side-effects and maintain robust telemetry logging.",
-    "> [!TIP]\n> Pro-tip: Always profile your bottlenecks before attempting premature micro-optimizations.",
-    "> [!IMPORTANT]\n> Ensure that any secrets, environment variables, or sensitive credentials are never hardcoded in source control.",
-    "> [!CAUTION]\n> Modifying shared mutable state across asynchronous boundaries without synchronization locks may cause non-deterministic race conditions."
+FRENCH_OPENERS = [
+    "Bien, installez-vous confortablement. C'est une excellente question, prenons le temps de la décortiquer méthodiquement.",
+    "Ah ! Voilà un sujet passionnant qui mérite qu'on s'y arrête plutôt que de survoler la documentation.",
+    "Très bien. Avant de coder à l'aveugle ou de vous perdre en conjectures, posons les principes au tableau noir.",
+    "J'apprécie votre démarche intellectuelle. Regardons ensemble comment aborder ce problème avec élégance et rigueur.",
+    "Voilà une interrogation tout à fait pertinente. Laissez-moi vous guider pas à pas sans brûler les étapes."
 ]
 
-def get_opener(persona: str = "mimic-4o") -> str:
-    pool = OPENERS.get(persona, OPENERS["mimic-4o"])
+ENGLISH_OPENERS = [
+    "Alright, take a seat. That's a great question—let's break it down methodically step by step.",
+    "Excellent inquiry. Before diving in blindly, let's establish solid foundations on the board.",
+    "A very pertinent question. Allow me to walk you through the core principles with clarity and rigor.",
+    "I appreciate your intellectual curiosity. Let's examine how to tackle this with elegance and precision."
+]
+
+FRENCH_CLOSERS = [
+    "\n\n---\n\n### 🎓 Note pédagogique du Prof. n00bi\nJ'espère que cette démonstration vous apporte la clarté nécessaire. Prenez le temps de relire et d'expérimenter par vous-même ! Et si vous souhaitez tester votre esprit critique et vos réflexes face à mes questions, n'hésitez pas à démarrer l'un de nos **protocoles d'évaluation** dans le menu supérieur. 🚀",
+    "\n\n---\n\n> [!TIP]\n> **Conseil d'étude du Prof. n00bi** : Ne vous contentez pas de mémoriser la solution, refaites la démonstration sans aide. Si vous vous sentez prêt pour un vrai défi académique, nos scénarios d'évaluation vous attendent !",
+    "\n\n---\n\nJ'attends de voir comment vous mettrez cela en pratique. Avez-vous une question sur un point particulier du cours, ou préférez-vous poursuivre le programme officiel de nos protocoles ?"
+]
+
+ENGLISH_CLOSERS = [
+    "\n\n---\n\n### 🎓 Prof. n00bi Didactic Wrap-up\nI trust this breakdown provides the clarity you were looking for. Take time to experiment with the code! When you feel ready for a comprehensive challenge, feel free to launch one of our evaluation protocols in the menu above. 🚀",
+    "\n\n---\n\n> [!TIP]\n> **Prof. n00bi Study Tip**: Never just copy solutions—rebuild the intuition from first principles. Keep up the disciplined work!"
+]
+
+CALLOUTS = [
+    "> [!NOTE]\n> **Rappel de cours** : En environnement de production, découplez toujours les effets de bord et soignez votre journalisation télémétrique.",
+    "> [!TIP]\n> **Astuce d'expert** : Profilez toujours vos goulets d'étranglement avant d'entreprendre des micro-optimisations prématurées.",
+    "> [!IMPORTANT]\n> **Règle d'or** : Ne stockez jamais d'informations d'authentification ou de secrets en clair dans votre gestionnaire de version.",
+    "> [!CAUTION]\n> **Attention au piège** : Modifier un état mutable partagé à travers des coroutines asynchrones sans verrou expose à des conditions de concurrence indéterministes."
+]
+
+def is_english(text: str) -> bool:
+    english_words = {
+        "the", "is", "what", "how", "why", "code", "explain", "in", "and", "to",
+        "of", "can", "you", "does", "with", "write", "create", "build", "for"
+    }
+    tokens = set(re.findall(r"\b[a-zA-Z]+\b", text.lower()))
+    matches = tokens.intersection(english_words)
+    return len(matches) >= 2
+
+def get_opener(is_en: bool = False, *args, **kwargs) -> str:
+    pool = ENGLISH_OPENERS if is_en else FRENCH_OPENERS
     return random.choice(pool)
 
-def get_closer(persona: str = "mimic-4o") -> str:
-    pool = CLOSERS.get(persona, CLOSERS["mimic-4o"])
+def get_closer(is_en: bool = False, *args, **kwargs) -> str:
+    pool = ENGLISH_CLOSERS if is_en else FRENCH_CLOSERS
     return random.choice(pool)
 
 def get_random_callout() -> str:
     return random.choice(CALLOUTS)
 
-def wrap_with_tropes(content: str, persona: str = "mimic-4o", include_callout: bool = True) -> str:
-    opener = get_opener(persona)
-    closer = get_closer(persona)
+def wrap_with_tropes(content: str, include_callout: bool = True, is_en: bool = False, *args, **kwargs) -> str:
+    opener = get_opener(is_en=is_en)
+    closer = get_closer(is_en=is_en)
     callout = f"\n\n{get_random_callout()}\n\n" if include_callout else "\n\n"
     
     return f"{opener}\n\n{content}{callout}{closer}"

@@ -2,19 +2,11 @@
 
 class MimicApp {
   constructor() {
-    this.activeModel = "mimic-4o";
     this.activeScenario = "evaluation_turing";
     this.sessionId = "session_" + Math.random().toString(36).substring(2, 9);
     this.messages = [];
     this.isGenerating = false;
     this.abortController = null;
-
-    this.modelMetadata = {
-      "mimic-4o": { name: "Mimic-4o-Omni", icon: "⚡", badge: "Fast", color: "purple" },
-      "deepfake-r1": { name: "DeepFake-R1", icon: "🧠", badge: "Reasoning", color: "blue" },
-      "claude-haiku": { name: "Claude-3.9-Haiku-ish", icon: "🎭", badge: "Nuanced", color: "amber" },
-      "hallucinate-xl": { name: "Hallucinate-XL", icon: "🌀", badge: "Parody", color: "rose" }
-    };
 
     this.scenarioMetadata = {
       "evaluation_turing": { name: "Protocole 42 (Turing)", icon: "🧪" },
@@ -42,12 +34,6 @@ class MimicApp {
     this.newChatBtn = document.getElementById("new-chat-btn");
     this.clearChatBtn = document.getElementById("clear-chat-btn");
     this.speedSelect = document.getElementById("speed-select");
-
-    // Model UI Elements
-    this.activeModelIcon = document.getElementById("active-model-icon");
-    this.activeModelName = document.getElementById("active-model-name");
-    this.activeModelBadge = document.getElementById("active-model-badge");
-    this.modelDropdown = document.getElementById("model-dropdown-menu");
 
     // Scenario UI Elements
     this.activeScenarioIcon = document.getElementById("active-scenario-icon");
@@ -79,15 +65,6 @@ class MimicApp {
       }
     });
 
-    // Model options selection
-    document.querySelectorAll(".model-option").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const modelId = btn.getAttribute("data-model");
-        this.selectModel(modelId);
-        this.modelDropdown.classList.add("hidden");
-      });
-    });
-
     // Scenario options selection
     document.querySelectorAll(".scenario-option").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -109,16 +86,6 @@ class MimicApp {
     // New Chat & Clear Chat
     this.newChatBtn.addEventListener("click", () => this.handleNewChat());
     this.clearChatBtn.addEventListener("click", () => this.handleNewChat());
-  }
-
-  selectModel(modelId) {
-    if (!this.modelMetadata[modelId]) return;
-    this.activeModel = modelId;
-    const meta = this.modelMetadata[modelId];
-
-    this.activeModelIcon.textContent = meta.icon;
-    this.activeModelName.textContent = meta.name;
-    this.activeModelBadge.textContent = meta.badge;
   }
 
   selectScenario(scenId) {
@@ -209,7 +176,6 @@ class MimicApp {
       endpoint: "/api/chat",
       payload: {
         messages: this.messages,
-        model: this.activeModel,
         speed: parseFloat(this.speedSelect.value) || 1.0,
         scenario_id: this.activeScenario,
         session_id: this.sessionId
@@ -239,7 +205,6 @@ class MimicApp {
     if (window.lucide) lucide.createIcons();
 
     // Create assistant DOM container
-    const meta = this.modelMetadata[this.activeModel];
     const msgCard = document.createElement("div");
     msgCard.className = "flex items-start gap-3.5 max-w-[95%]";
 
@@ -251,7 +216,10 @@ class MimicApp {
       <div class="flex-1 space-y-2 overflow-hidden bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <!-- Header -->
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-slate-900">${meta.name}</span>
+          <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <span>👨‍🏫 Prof. n00bi</span>
+            <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-pink-50 text-[#d4077b] border border-pink-200">Enseignant</span>
+          </span>
           <span class="text-[10px] font-mono text-slate-400">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
 
@@ -261,7 +229,7 @@ class MimicApp {
             <summary class="flex items-center justify-between p-2.5 cursor-pointer hover:bg-slate-100 transition-colors select-none text-slate-600 font-medium">
               <span class="flex items-center gap-2">
                 <span id="${messageId}-thinking-spinner" class="inline-block w-2.5 h-2.5 rounded-full bg-[#d4077b] animate-ping"></span>
-                <span id="${messageId}-thinking-label" class="text-slate-800 font-semibold">Réflexion de nOObi...</span>
+                <span id="${messageId}-thinking-label" class="text-slate-800 font-semibold">Réflexion didactique...</span>
               </span>
               <span id="${messageId}-thinking-timer" class="font-mono text-[10px] text-slate-400">0.0s</span>
             </summary>

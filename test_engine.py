@@ -5,17 +5,17 @@ from engine.pacer import simulate_token_stream
 
 async def test_cases():
     test_prompts = [
-        ("Binary search in python", "mimic-4o", "coding"),
-        ("Evaluate (45 * 12) + (360 / 6)", "deepfake-r1", "math"),
-        ("Explain recursion like I'm 5", "claude-haiku", "explanation"),
-        ("Search for modern microservices", "mimic-4o", "tool_call"),
-        ("Tell me about quantum coffee", "hallucinate-xl", "hallucination")
+        ("Binary search in python", "coding"),
+        ("Evaluate (45 * 12) + (360 / 6)", "math"),
+        ("Explain recursion like I'm 5", "explanation"),
+        ("Search for modern microservices", "tool_call"),
+        ("Raconte-moi une théorie quantique sur le café", "hallucination")
     ]
 
-    print("=== TESTING MIMIC ROUTER & GENERATORS ===")
-    for prompt, persona, expected_archetype in test_prompts:
-        bundle = route_and_generate(prompt, persona=persona)
-        print(f"\n[PROMPT]: {prompt} | [PERSONA]: {persona}")
+    print("=== TESTING PROF. N00BI ROUTER & GENERATORS ===")
+    for prompt, expected_archetype in test_prompts:
+        bundle = route_and_generate(prompt)
+        print(f"\n[PROMPT]: {prompt}")
         print(f"[ARCHETYPE]: {bundle['archetype']} (Expected: {expected_archetype})")
         assert bundle['archetype'] == expected_archetype, f"Expected {expected_archetype}, got {bundle['archetype']}"
         print(f"[HAS THOUGHT]: {bool(bundle.get('thought'))}")

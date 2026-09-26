@@ -15,7 +15,7 @@ from engine.router import route_and_generate
 from engine.pacer import simulate_token_stream
 from engine.scenario_engine import scenario_manager
 
-app = FastAPI(title="MimicLLM Engine", version="1.0.0")
+app = FastAPI(title="n00bi Engine", version="1.0.0")
 
 # Enable CORS for open developer tooling
 app.add_middleware(
@@ -28,42 +28,6 @@ app.add_middleware(
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-# Models metadata
-MODELS_CATALOG = [
-    {
-        "id": "mimic-4o",
-        "name": "Mimic-4o-Omni",
-        "badge": "Default",
-        "description": "Fast, eager-to-please, structured lists, enthusiastic tone.",
-        "icon": "zap",
-        "vram": "0 GB (Saved 80 GB)"
-    },
-    {
-        "id": "deepfake-r1",
-        "name": "DeepFake-R1 (Reasoning)",
-        "badge": "Reasoning",
-        "description": "Extremely verbose self-reflective internal monologue before answer.",
-        "icon": "brain",
-        "vram": "0 GB (Saved 140 GB)"
-    },
-    {
-        "id": "claude-haiku",
-        "name": "Claude-3.9-Haiku-ish",
-        "badge": "Nuanced",
-        "description": "Thoughtful, ethical caveats, measured tone, refuses harmless prompts playfully.",
-        "icon": "feather",
-        "vram": "0 GB (Saved 70 GB)"
-    },
-    {
-        "id": "hallucinate-xl",
-        "name": "Hallucinate-XL",
-        "badge": "Novelty",
-        "description": "Speaks with absolute scientific authority citing made-up research papers.",
-        "icon": "sparkles",
-        "vram": "0 GB (Saved 320 GB)"
-    }
-]
 
 # Track cumulative simulated savings
 CUMULATIVE_STATS = {
@@ -80,7 +44,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
-    model: Optional[str] = "mimic-4o"
+    model: Optional[str] = None
     speed: Optional[float] = 1.0
     scenario_id: Optional[str] = None
     session_id: Optional[str] = None
@@ -98,10 +62,6 @@ async def serve_index():
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(STATIC_DIR / "favicon.ico")
-
-@app.get("/api/models")
-async def get_models():
-    return {"models": MODELS_CATALOG}
 
 @app.get("/api/scenarios")
 async def get_scenarios():
@@ -137,7 +97,6 @@ async def get_stats():
 @app.post("/api/chat")
 async def chat_endpoint(payload: ChatRequest):
     user_prompt = payload.messages[-1].content if payload.messages else "Hello"
-    model = payload.model or "mimic-4o"
     speed = payload.speed or 1.0
     scenario_id = payload.scenario_id
     session_id = payload.session_id or "default_session"
@@ -146,7 +105,7 @@ async def chat_endpoint(payload: ChatRequest):
     if scenario_id and scenario_id != "none" and scenario_id != "free_mode":
         bundle = scenario_manager.process_turn(session_id, user_prompt, scenario_id)
     else:
-        bundle = route_and_generate(user_prompt, persona=model)
+        bundle = route_and_generate(user_prompt)
 
     CUMULATIVE_STATS["requests_served"] += 1
 
@@ -161,73 +120,6 @@ async def chat_endpoint(payload: ChatRequest):
             yield sse_event
 
     return EventSourceResponse(event_generator())
-
-# OpenAI API Compatible Endpoint (/v1/chat/completions)
-@app.post("/v1/chat/completions")
-async def openai_chat_completions(request: Request):
-    data = await request.json()
-    messages = data.get("messages", [])
-    model = data.get("model", "mimic-4o")
-    stream = data.get("stream", False)
-    
-    user_prompt = messages[-1].get("content", "") if messages else "Hello"
-    bundle = route_and_generate(user_prompt, persona=model)
-    created_ts = int(time.time())
-
-    if stream:
-        async def openai_stream():
-            async for sse_event in simulate_token_stream(bundle):
-                if sse_event["event"] == "content":
-                    chunk_data = json.loads(sse_event["data"])
-                    payload = {
-                        "id": f"chatcmpl-mimic-{created_ts}",
-                        "object": "chat.completion.chunk",
-                        "created": created_ts,
-                        "model": model,
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {"content": chunk_data["delta"]},
-                                "finish_reason": None
-                            }
-                        ]
-                    }
-                    yield {"data": json.dumps(payload)}
-            
-            # Send finish reason chunk
-            finish_payload = {
-                "id": f"chatcmpl-mimic-{created_ts}",
-                "object": "chat.completion.chunk",
-                "created": created_ts,
-                "model": model,
-                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]
-            }
-            yield {"data": json.dumps(finish_payload)}
-            yield {"data": "[DONE]"}
-
-        return EventSourceResponse(openai_stream())
-    else:
-        return {
-            "id": f"chatcmpl-mimic-{created_ts}",
-            "object": "chat.completion",
-            "created": created_ts,
-            "model": model,
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": bundle["content"]
-                    },
-                    "finish_reason": "stop"
-                }
-            ],
-            "usage": {
-                "prompt_tokens": len(user_prompt) // 4,
-                "completion_tokens": len(bundle["content"]) // 4,
-                "total_tokens": (len(user_prompt) + len(bundle["content"])) // 4
-            }
-        }
 
 if __name__ == "__main__":
     import uvicorn
