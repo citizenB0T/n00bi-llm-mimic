@@ -95,6 +95,10 @@ async def serve_index():
     index_file = STATIC_DIR / "index.html"
     return FileResponse(index_file)
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(STATIC_DIR / "favicon.ico")
+
 @app.get("/api/models")
 async def get_models():
     return {"models": MODELS_CATALOG}
