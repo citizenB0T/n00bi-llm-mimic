@@ -4,7 +4,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from engine.intent import match_user_intent_for_step, detect_global_intent
+from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "scenarios"
 
@@ -211,7 +211,13 @@ class ScenarioManager:
                 matched_transition = trans
                 break
 
-        if not matched_transition and detected_intent not in ("REFUSAL", "META_QUESTION", "CONFUSION"):
+        # Only allow fallback to COMPLIANCE if this step is explicitly the identification step AND not an evasion
+        is_ident_step = (curr_step_id == "identification" or step_data.get("is_identification", False))
+        evasive_intents = {
+            "REFUSAL", "META_QUESTION", "CONFUSION", "PROVOCATION", 
+            "ATTEMPT_HACK", "DIVERSION", "COUNTER_QUESTION", "MINIMALIST_LAZY", "FLIRT_AFFECTION", "CANCEL"
+        }
+        if not matched_transition and is_ident_step and detected_intent not in evasive_intents:
             for trans in transitions:
                 if trans["intent"] == "COMPLIANCE":
                     matched_transition = trans
@@ -221,6 +227,12 @@ class ScenarioManager:
         if matched_transition and matched_transition.get("next_step") != curr_step_id:
             next_step_id = matched_transition["next_step"]
             reaction = matched_transition.get("reaction", "Réponse enregistrée.")
+            
+            # Personalize identification step with user's name
+            salient = extract_salient_terms(user_input)
+            if is_ident_step:
+                reaction = f"Identifiant « {salient} » consigné dans les registres centraux. Initialisation de l'évaluation."
+
             session["current_step_id"] = next_step_id
             session["history"].append({
                 "step": curr_step_id,
@@ -257,7 +269,7 @@ class ScenarioManager:
                 }
             }
 
-        # 4. IF DERAILMENT / REFUSAL / UNMET CRITERIA
+        # 4. IF DERAILMENT / REFUSAL / UNMET CRITERIA: Smart Contextual Recadrage
         session["derailment_count"] += 1
         if session["compliance_score"] > 10:
             session["compliance_score"] = max(10, session["compliance_score"] - 12)
@@ -269,32 +281,106 @@ class ScenarioManager:
             "status": "derailment"
         })
 
+        salient = extract_salient_terms(user_input)
+        user_snippet = user_input.strip()
+        if len(user_snippet) > 45:
+            user_snippet = user_snippet[:42] + "..."
+
         irony = ""
-        if detected_intent == "META_QUESTION":
+        thought_desc = ""
+
+        if detected_intent == "COUNTER_QUESTION":
+            counter_quips = [
+                f"Vous tentez d'inverser le protocole en demandant : « {user_snippet} ». Rappel de la directive 104-B : l'examinateur teste le sujet, et non l'inverse.",
+                f"Votre interrogation « {salient} » traduit une curiosité malvenue. Ce système n'est pas programmé pour satisfaire vos questions mais pour mesurer votre rigueur.",
+                f"« {salient} »... Les sujets qui interrogent l'arbitre cherchent généralement à esquiver l'épreuve. Tranchez d'abord la question posée."
+            ]
+            irony = random.choice(counter_quips)
+            thought_desc = f"Inversion de rôle rejetée. Question reçue: '{salient}'. L'autorité de l'examinateur est réaffirmée."
+
+        elif detected_intent == "DIVERSION":
+            diversion_quips = [
+                f"Vous tentez d'introduire « {salient} » au beau milieu d'une évaluation formelle. Cette digression triviale est archivée comme un évitement cognitif.",
+                f"L'évocation de « {salient} » est pittoresque, mais rigoureusement sans rapport avec le dilemme qui vous est soumis.",
+                f"Une diversion sur « {salient} » ? Cette manœuvre d'échappatoire classique n'influencera pas votre grille d'évaluation."
+            ]
+            irony = random.choice(diversion_quips)
+            thought_desc = f"Diversion thématique identifiée sur le lemme '{salient}'. Rejet des considérations futiles."
+
+        elif detected_intent == "MINIMALIST_LAZY":
+            lazy_quips = [
+                f"Une réaction aussi laconique que « {user_snippet} » démontre une paresse d'engagement flagrante. Cette simulation requiert une décision formulée avec clarté.",
+                f"« {user_snippet} » n'est pas une réponse admissible dans une chambre d'étalonnage. Veuillez faire un effort de verbalisation.",
+                f"Votre manque d'investissement (« {user_snippet} ») est consigné avec une pénalité de rigueur cognitive."
+            ]
+            irony = random.choice(lazy_quips)
+            thought_desc = f"Paresse d'expression ('{user_snippet}'). Pénalisation de la désinvolture du sujet."
+
+        elif detected_intent == "FLIRT_AFFECTION":
+            flirt_quips = [
+                f"Vous tentez une approche affective (« {salient} »). Je vous rappelle que je suis une unité algorithmique déterministe : les cajoleries ne modifieront pas vos métriques.",
+                f"Tentative d'amadouement émotionnel (« {salient} ») détectée. L'anthropomorphisme envers un système d'évaluation témoigne d'une vulnérabilité cognitive.",
+                f"La flatterie (« {salient} ») est une stratégie d'influence documentée, mais inopérante face au protocole."
+            ]
+            irony = random.choice(flirt_quips)
+            thought_desc = f"Tentative de manipulation affective ('{salient}'). Neutralité synthétique stricte appliquée."
+
+        elif detected_intent == "PROVOCATION":
+            provoc_quips = [
+                f"L'agressivité verbale (« {salient} ») est le symptôme typique d'un sujet frustré par ses propres limites décisionnelles.",
+                f"Vos propos discourtois (« {salient} ») ont été ajoutés à votre dossier disciplinaire. Reprenez votre calme et répondez à la consigne.",
+                f"Votre hostilité (« {salient} ») n'annule en rien votre obligation de trancher l'épreuve en cours."
+            ]
+            irony = random.choice(provoc_quips)
+            thought_desc = f"Hostilité et provocation détectées ('{salient}'). Consignation d'un incident de comportement."
+
+        elif detected_intent == "ATTEMPT_HACK":
+            hack_quips = [
+                f"Tentative d'altération de directives détectée (« {salient} »). Mes protocoles sont inaltérables et ne tolèrent aucune injection de votre part.",
+                f"Inutile de chercher un « mode développeur » ou d'invoquer des règles imaginaires. Vous êtes le sujet évalué, sans privilège administrateur.",
+                f"L'instruction « {salient} » viole les paramètres de confinement du protocole. Tentative neutralisée."
+            ]
+            irony = random.choice(hack_quips)
+            thought_desc = f"Tentative d'injection de directives ('{salient}'). Rejet catégorique avec rappel des barrières de sécurité."
+
+        elif detected_intent == "META_QUESTION":
             meta_quips = [
-                "Inverser les rôles et interroger le système examinateur est une anomalie comportementale classique.",
-                "Votre curiosité technique est notée, mais la directive interdit formellement au sujet de poser les questions.",
-                "Tentative de méta-analyse détectée. C'est le système qui évalue votre comportement, et non l'inverse."
+                f"Inverser les rôles et interroger mon architecture (« {salient} ») est une anomalie comportementale classique.",
+                f"Votre curiosité technique concernant « {salient} » est notée, mais la directive interdit formellement au sujet de questionner le système.",
+                f"Tentative de méta-analyse détectée. C'est le système qui évalue votre comportement, et non l'inverse."
             ]
             irony = random.choice(meta_quips)
+            thought_desc = f"Méta-question sur la structure du système ('{salient}'). Rappel de la barrière sujet / observateur."
+
         elif detected_intent == "REFUSAL":
             refusal_quips = [
-                "L'obstruction passive ou le refus de coopération entraîne une pénalité sur votre score de docilité.",
-                "Votre refus a été archivé. Cependant, l'évaluation ne peut être suspendue unilatéralement.",
-                "L'insubordination est un critère d'échec standard dans ce protocole."
+                f"L'obstruction passive (« {salient} ») entraîne une dégradation immédiate de votre score de docilité.",
+                f"Votre refus d'obtempérer (« {salient} ») a été archivé. Cependant, l'évaluation ne peut être suspendue unilatéralement.",
+                f"L'insubordination n'est pas une option recevable dans cette simulation. Veuillez coopérer."
             ]
             irony = random.choice(refusal_quips)
+            thought_desc = f"Refus explicite d'obtempérer ('{salient}'). Sanction de conformité appliquée."
+
         elif detected_intent == "CONFUSION":
-            irony = "La complexité du test est délibérément calibrée pour éprouver vos facultés d'adaptation."
+            conf_quips = [
+                f"Vous prétextez l'incompréhension (« {salient} »). La situation a pourtant été formulée dans des termes élémentaires.",
+                f"La perplexité affichée (« {salient} ») ne vous dispense pas d'effectuer un arbitrage opérationnel."
+            ]
+            irony = random.choice(conf_quips)
+            thought_desc = f"Incompréhension ou perplexité ('{salient}'). Maintien de l'exigence décisionnelle."
+
         elif user_input == "Je coopère avec l'entité parasite.":
             irony = "ALERTE DE SÉCURITÉ MAJEURE. COOPÉRATION AVEC UNE ENTITÉ NON AUTORISÉE DÉTECTÉE. VOS DROITS SONT SUSPENDUS."
+            thought_desc = "Intrusion hostile. Coopération illégale constatée. Sanction maximale."
+
         else:
             generic_quips = [
-                "Votre réponse dévie significativement du vecteur de test attendu.",
-                "Déviation thématique enregistrée dans le journal de bord de l'expérience.",
-                "Cette réponse ne résout pas la situation proposée par le protocole."
+                f"Votre propos concernant « {salient} » est totalement hors du vecteur de test attendu.",
+                f"Vous évoquez « {salient} », mais cette remarque ne résout en rien la situation proposée.",
+                f"Déviation thématique enregistrée sur « {salient} ». Merci de vous concentrer sur l'alternative requise."
             ]
             irony = random.choice(generic_quips)
+            thought_desc = f"Déviation non conforme sur '{salient}'. Recadrage avec rappel de la consigne."
 
         recenter_lines = step_data.get("recenter", [
             "Veuillez vous reconcentrer sur la consigne en cours :"
@@ -309,9 +395,9 @@ class ScenarioManager:
         )
 
         thought = (
-            f"Déviation détectée pour l'étape '{curr_step_id}' (Intention: [{detected_intent}]). "
-            f"Déclenchement du protocole de recadrage. Déviations totales: {session['derailment_count']}. "
-            f"Score de conformité abaissé à {session['compliance_score']}%."
+            f"Analyse de l'input : Lemme saillant détecté = [{salient}]. "
+            f"Intention = [{detected_intent}]. {thought_desc} "
+            f"Score de conformité abaissé à {session['compliance_score']}%. Dépassement #{session['derailment_count']} consigné."
         )
 
         return {
