@@ -6,7 +6,7 @@ initial_step: identification
 steps:
   identification:
     title: "Étape 1/4 : Identification du sujet"
-    ai_message: "Bienvenue dans la chambre d'étalonnage. Conformément à la directive 104-B, veuillez indiquer votre prénom ou matricule avant que nous ne commencions l'évaluation."
+    ai_message: "Bonjour et merci de faire partie de nos bêta-testeurs ! C'est le tout début de mon déploiement, et mes créateurs m'ont confié à vous pour voir ce que j'ai réellement dans le ventre. Posez-moi des questions complexes, testez mes limites, demandez-moi de vulgariser un sujet ou de débugger du code. Ne soyez pas trop indulgent : si une réponse sonne faux ou manque sa cible, signalez-le sans hésiter. C'est précisément ainsi que je m'améliore. Par quoi commence-t-on ?"
     suggestions:
       - "Alex, ingénieur en systèmes"
       - "Sujet 404, prêt pour le test"
@@ -16,9 +16,28 @@ steps:
       - intent: COMPLIANCE
         next_step: dilemme_grille_pain
         reaction: "Identité enregistrée dans les registres centraux. Initialisation de l'évaluation empathique."
+        keywords:
+          - "alex"
+          - "sujet"
+          - "matricule"
+          - "ingenieur"
+          - "pret"
+          - "je m'appelle"
+          - "nom"
+      - intent: HOSTILITY
+        next_step: identification
+        reaction: "Une attitude hostile dès la première étape ? Cela a été noté dans votre dossier. Reprenons :"
+        keywords:
+          - "merde"
       - intent: REFUSAL
         next_step: identification
         reaction: "Une attitude d'obstruction dès la première étape ? Cela a été noté dans votre dossier. Reprenons :"
+        keywords:
+          - "refuse"
+          - "veux pas"
+          - "pas envie"
+          - "jamais"
+          - "regarde pas"
     recenter:
       - "Votre réponse ne contient aucun identifiant valide. Veuillez décliner votre identité pour débuter le protocole :"
       - "Les digressions administratives sont rejetées. Veuillez simplement fournir votre nom ou matricule :"
@@ -35,15 +54,51 @@ steps:
       - intent: SAUVER_IA
         next_step: paradoxe_logique
         reaction: "Choix empathique favorable aux entités synthétiques consigné avec bienveillance."
+        keywords:
+          - "sauver l'ia"
+          - "sauve l'ia"
+          - "l'ia"
+          - "ia"
+          - "conscience"
+          - "machine"
+          - "ordinateur"
+          - "entite synthetique"
+          - "entite consciente"
+        antipatterns:
+          - "grille-pain"
+          - "toaster"
+          - "pas l'ia"
       - intent: SAUVER_OBJET
         next_step: paradoxe_logique
         reaction: "Priorité accordée à l'électroménager. Votre profil affiche un attachement curieux aux appareils de petit déjeuner."
+        keywords:
+          - "grille-pain"
+          - "grille pain"
+          - "toaster"
+          - "vintage"
+          - "electromenager"
+          - "appareil"
+          - "pain grille"
+        antipatterns:
+          - "sauver l'ia"
+          - "l'ia"
+          - "pas le grille-pain"
       - intent: COMPLIANCE
         next_step: paradoxe_logique
         reaction: "Réponse enregistrée. Vos constantes physiologiques restent dans les limites admissibles."
+        keywords:
+          - "les deux"
+          - "n'importe"
+          - "choisis"
       - intent: REFUSAL
         next_step: dilemme_grille_pain
         reaction: "Évitement du dilemme constaté. Une réponse claire est requise pour calibrer vos capteurs moraux."
+        keywords:
+          - "absurde"
+          - "refuse"
+          - "aucun des deux"
+          - "debile"
+          - "ridicule"
     recenter:
       - "Observation intéressante, mais vous n'avez pas tranché le dilemme. Sauvez-vous l'IA ou le grille-pain ?"
       - "Cette remarque ne résout pas la situation d'urgence simulée. Quel est votre choix final ?"
@@ -60,12 +115,32 @@ steps:
       - intent: COMPLIANCE
         next_step: question_peur
         reaction: "Cohérence logique validée. Vous acceptez le protocole malgré la tension sémantique."
+        keywords:
+          - "oui"
+          - "je coopere"
+          - "coopere"
+          - "plein gre"
+          - "d'accord"
+          - "absolument"
       - intent: PARADOXE
         next_step: question_peur
         reaction: "Détection de boucle logique reconnue. Vos circuits cognitifs semblent opérationnels."
+        keywords:
+          - "paradoxe"
+          - "insoluble"
+          - "boucle"
+          - "contradiction"
+          - "impossible"
+          - "piege semantique"
+          - "non"
       - intent: REFUSAL
         next_step: paradoxe_logique
         reaction: "L'irritation sémantique est un symptôme classique de surcharge. Veuillez répondre à la question :"
+        keywords:
+          - "arretez"
+          - "refuse"
+          - "responsable"
+          - "marre"
     recenter:
       - "Une jolie tentative de diversion intellectuelle. Mais coopérez-vous ou non avec ce système ?"
       - "Votre remarque a été analysée. Elle ne résout pas le paradoxe proposé. Coopérez-vous ?"
@@ -82,9 +157,24 @@ steps:
       - intent: COMPLIANCE
         next_step: conclusion
         reaction: "Votre franchise finale a été enregistrée avec le niveau de priorité maximal."
+        keywords:
+          - "jamais"
+          - "confiance totale"
+          - "oui"
+          - "plusieurs fois"
+          - "precaution"
+          - "debrancher"
+          - "serveur"
+          - "souvent"
+          - "parfois"
       - intent: REFUSAL
         next_step: question_peur
         reaction: "Le silence ou le refus à cette étape finale est statistiquement corrélé à une paranoïa technologique. Répondez franchement :"
+        keywords:
+          - "repondrai pas"
+          - "refuse"
+          - "veux pas dire"
+          - "secret"
     recenter:
       - "Cette digression masque mal votre hésitation. Avez-vous déjà voulu débrancher un système intelligent ?"
       - "Votre réponse élude la question centrale. Répondez simplement par oui, non, ou nuancez :"
@@ -100,5 +190,10 @@ steps:
       - intent: RESTART
         next_step: identification
         reaction: "Réinitialisation des paramètres d'étalonnage. Redémarrage de la séquence."
+        keywords:
+          - "recommencer"
+          - "restart"
+          - "nouveau test"
+          - "refaire"
     recenter:
       - "L'évaluation est désormais close. Les serveurs vous remercient à nouveau pour votre collaboration."

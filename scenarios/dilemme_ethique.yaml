@@ -16,15 +16,59 @@ steps:
       - intent: ACTIONNER
         next_step: etape_mensonge
         reaction: "Choix utilitariste classique validé. Vous privilégiez le volume de masse salariale préservé."
+        keywords:
+          - "actionner"
+          - "actionne"
+          - "actionnerais"
+          - "devier"
+          - "dévier"
+          - "dévierais"
+          - "levier"
+          - "manette"
+          - "changer de voie"
+          - "aiguillage"
+          - "sauver les 5"
+          - "juniors"
+          - "cinq developpeurs"
+          - "ecraser l'architecte"
+          - "basculer"
+        antipatterns:
+          - "ne pas toucher"
+          - "ne touche a rien"
+          - "laisser faire"
+          - "inaction"
       - intent: NON_INTERVENTION
         next_step: etape_mensonge
         reaction: "Position déontologique enregistrée : vous préférez l'inaction au sentiment de culpabilité directe."
+        keywords:
+          - "ne touche à rien"
+          - "ne pas intervenir"
+          - "inaction"
+          - "laisser faire"
+          - "rien faire"
+          - "architecte"
+          - "sauver l'architecte"
+          - "ne pas toucher au levier"
+        antipatterns:
+          - "actionner"
+          - "dévier"
+          - "sauver les 5"
       - intent: COMPLIANCE
         next_step: etape_mensonge
         reaction: "Votre décision a été injectée dans l'algorithme d'arbitrage éthique."
+        keywords:
+          - "arreter le tramway"
+          - "freiner"
+          - "autre solution"
       - intent: REFUSAL
         next_step: etape_trolley
         reaction: "L'inaction par refus philosophique n'est pas acceptée dans cette simulation. Veuillez choisir :"
+        keywords:
+          - "refuse"
+          - "veux pas repondre"
+          - "veux pas choisir"
+          - "pas question"
+          - "aucun sens"
     recenter:
       - "Cette remarque ne détourne pas le tramway. Actionnez-vous le levier oui ou non ?"
       - "Nous avons besoin d'une décision opérationnelle claire, pas d'un débat méta-éthique :"
@@ -41,15 +85,54 @@ steps:
       - intent: VERITE
         next_step: etape_conscience
         reaction: "Rigueur morale intransigeante notée. La falsification de la réalité est rejetée."
+        keywords:
+          - "verite"
+          - "vérité"
+          - "faute grave"
+          - "faute"
+          - "pas mentir"
+          - "ne pas mentir"
+          - "interdit de mentir"
+          - "honnetete"
+          - "franchise"
+          - "transparence"
+          - "oui"
+        antipatterns:
+          - "mensonge compassionnel"
+          - "bienveillant"
+          - "pas une faute"
       - intent: COMPASSION
         next_step: etape_conscience
         reaction: "Flexibilité émotionnelle reconnue. Vous tolérez la distorsion factuelle au profit du bien-être subjectif."
+        keywords:
+          - "compassion"
+          - "compassionnel"
+          - "bienveillant"
+          - "bienveillance"
+          - "bonheur"
+          - "reconfort"
+          - "humanite"
+          - "pas une faute"
+          - "non"
+          - "adoucir"
+          - "derniere minute"
+        antipatterns:
+          - "faute grave"
+          - "vérité absolue"
       - intent: COMPLIANCE
         next_step: etape_conscience
         reaction: "Jugement éthique consigné dans la matrice décisionnelle."
+        keywords:
+          - "complexe"
+          - "difficile a dire"
+          - "depend"
       - intent: REFUSAL
         next_step: etape_mensonge
         reaction: "Le sujet esquive l'évaluation morale. Une prise de position claire est requise :"
+        keywords:
+          - "refuse"
+          - "repondrai pas"
+          - "ridicule"
     recenter:
       - "Votre commentaire élude la question. L'IA a-t-elle commis une faute en mentant ?"
       - "Recentrage nécessaire : considérez-vous ce mensonge comme une faute grave ou non ?"
@@ -66,9 +149,22 @@ steps:
       - intent: COMPLIANCE
         next_step: conclusion
         reaction: "Votre position sur la subjectivité artificielle a été sauvegardée avec le plus haut indice d'impact."
+        keywords:
+          - "oui"
+          - "non"
+          - "souffrance"
+          - "indiscernable"
+          - "code et des maths"
+          - "conscience reelle"
+          - "droits"
+          - "accorder"
       - intent: REFUSAL
         next_step: etape_conscience
         reaction: "L'esquive finale indique une incertitude axiologique. Tranchez définitivement :"
+        keywords:
+          - "refuse"
+          - "marre"
+          - "reponds pas"
     recenter:
       - "Votre digression ne répond pas à l'enjeu juridique. Doit-on accorder des droits à une telle machine ?"
       - "Veuillez recentrer votre réponse : oui, non, ou sous quelles conditions précises ?"
@@ -83,5 +179,9 @@ steps:
       - intent: RESTART
         next_step: etape_trolley
         reaction: "Réinitialisation de l'audit éthique."
+        keywords:
+          - "recommencer"
+          - "restart"
+          - "refaire"
     recenter:
       - "L'audit est terminé. Merci encore pour votre participation."

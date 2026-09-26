@@ -218,7 +218,7 @@ class MimicApp {
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
             <span>👨‍🏫 Prof. n00bi</span>
-            <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-pink-50 text-[#d4077b] border border-pink-200">Enseignant</span>
+            <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-pink-50 text-[#d4077b] border border-pink-200">Mentor IA</span>
           </span>
           <span class="text-[10px] font-mono text-slate-400">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
