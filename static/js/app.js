@@ -70,9 +70,10 @@ class MimicApp {
       this.handleSubmit();
     });
 
-    // Enter to submit, Shift+Enter for newline
+    // Enter to submit, Shift+Enter for newline (IME safe)
     this.promptInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
+        if (e.isComposing || e.keyCode === 229) return;
         e.preventDefault();
         this.handleSubmit();
       }
@@ -220,7 +221,7 @@ class MimicApp {
     const msgDiv = document.createElement("div");
     msgDiv.className = "flex justify-end";
     msgDiv.innerHTML = `
-      <div class="max-w-[85%] rounded-2xl bg-purple-600/20 border border-purple-500/40 px-4 py-3 text-sm text-gray-100 shadow-sm">
+      <div class="max-w-[85%] rounded-2xl bg-slate-900 text-white px-5 py-3 text-sm shadow-sm">
         <p class="whitespace-pre-wrap leading-relaxed">${this.escapeHtml(text)}</p>
       </div>
     `;
@@ -233,9 +234,8 @@ class MimicApp {
     this.abortController = new AbortController();
 
     // Toggle button to stop icon
-    this.sendBtn.innerHTML = `<i data-lucide="square" class="w-4 h-4 text-rose-400"></i>`;
-    this.sendBtn.classList.replace("bg-purple-600", "bg-dark-700");
-    this.sendBtn.classList.add("border", "border-rose-500/50");
+    this.sendBtn.innerHTML = `<i data-lucide="square" class="w-4 h-4 text-white"></i>`;
+    this.sendBtn.classList.replace("bg-[#d4077b]", "bg-slate-800");
     if (window.lucide) lucide.createIcons();
 
     // Create assistant DOM container
@@ -245,45 +245,45 @@ class MimicApp {
 
     const messageId = `msg-${Date.now()}`;
     msgCard.innerHTML = `
-      <div class="w-8 h-8 rounded-xl bg-dark-700 border border-dark-600 flex items-center justify-center shrink-0 text-base shadow-sm">
-        ${meta.icon}
+      <div class="w-8 h-8 rounded-full bg-[#121417] text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-sm">
+        n<span class="text-[#d4077b]">O</span>
       </div>
-      <div class="flex-1 space-y-2 overflow-hidden">
+      <div class="flex-1 space-y-2 overflow-hidden bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <!-- Header -->
         <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold text-gray-200">${meta.name}</span>
-          <span class="text-[10px] font-mono text-gray-500">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span class="text-xs font-bold text-slate-900">${meta.name}</span>
+          <span class="text-[10px] font-mono text-slate-400">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
 
         <!-- Simulated Thinking Accordion -->
         <div id="${messageId}-thinking-container" class="hidden">
-          <details class="group bg-dark-800/80 border border-dark-600 rounded-xl overflow-hidden text-xs" open>
-            <summary class="flex items-center justify-between p-2.5 cursor-pointer hover:bg-dark-700/50 transition-colors select-none text-gray-400 font-medium">
+          <details class="group bg-slate-50 border border-slate-200 rounded-xl overflow-hidden text-xs" open>
+            <summary class="flex items-center justify-between p-2.5 cursor-pointer hover:bg-slate-100 transition-colors select-none text-slate-600 font-medium">
               <span class="flex items-center gap-2">
-                <span id="${messageId}-thinking-spinner" class="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping"></span>
-                <span id="${messageId}-thinking-label" class="text-purple-300">Thinking...</span>
+                <span id="${messageId}-thinking-spinner" class="inline-block w-2.5 h-2.5 rounded-full bg-[#d4077b] animate-ping"></span>
+                <span id="${messageId}-thinking-label" class="text-slate-800 font-semibold">Réflexion de nOObi...</span>
               </span>
-              <span id="${messageId}-thinking-timer" class="font-mono text-[10px] text-gray-500">0.0s</span>
+              <span id="${messageId}-thinking-timer" class="font-mono text-[10px] text-slate-400">0.0s</span>
             </summary>
-            <div id="${messageId}-thinking-content" class="p-3 pt-1 text-gray-400 font-mono text-[11px] whitespace-pre-wrap border-t border-dark-700/60 leading-relaxed bg-dark-900/50"></div>
+            <div id="${messageId}-thinking-content" class="p-3 pt-1 text-slate-600 font-mono text-[11px] whitespace-pre-wrap border-t border-slate-200 leading-relaxed bg-white"></div>
           </details>
         </div>
 
         <!-- Simulated Tool Call Card -->
         <div id="${messageId}-tool-container" class="hidden">
-          <div class="bg-dark-800 border border-blue-500/30 rounded-xl p-2.5 text-xs space-y-1.5">
-            <div class="flex items-center justify-between text-blue-400 font-mono text-[11px]">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+            <div class="flex items-center justify-between text-slate-700 font-mono text-[11px]">
               <span class="flex items-center gap-1.5">
-                <i data-lucide="wrench" class="w-3.5 h-3.5"></i> Tool Execution: <strong id="${messageId}-tool-name"></strong>
+                <i data-lucide="wrench" class="w-3.5 h-3.5 text-[#d4077b]"></i> Outil : <strong id="${messageId}-tool-name"></strong>
               </span>
-              <span id="${messageId}-tool-status" class="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300">Executing...</span>
+              <span id="${messageId}-tool-status" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">Exécution...</span>
             </div>
-            <pre id="${messageId}-tool-result" class="text-[10px] text-gray-400 bg-dark-900 p-2 rounded border border-dark-700 font-mono whitespace-pre-wrap overflow-x-auto"></pre>
+            <pre id="${messageId}-tool-result" class="text-[11px] text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200 font-mono whitespace-pre-wrap overflow-x-auto"></pre>
           </div>
         </div>
 
         <!-- Main Response Body -->
-        <div id="${messageId}-content" class="prose-custom text-sm text-gray-200">
+        <div id="${messageId}-content" class="prose-custom text-sm text-slate-800">
           <span class="typing-cursor"></span>
         </div>
 
@@ -291,7 +291,7 @@ class MimicApp {
         <div id="${messageId}-suggestions" class="suggestions-container hidden"></div>
 
         <!-- Metrics Footer -->
-        <div id="${messageId}-metrics" class="hidden pt-2 border-t border-dark-700/60 flex items-center gap-3 text-[10px] font-mono text-gray-500"></div>
+        <div id="${messageId}-metrics" class="hidden pt-2 border-t border-slate-100 flex items-center gap-3 text-[10px] font-mono text-slate-400"></div>
       </div>
     `;
 
@@ -439,7 +439,7 @@ class MimicApp {
 
       // Restore submit button
       this.sendBtn.innerHTML = `<i data-lucide="arrow-up" class="w-4 h-4"></i>`;
-      this.sendBtn.classList.replace("bg-dark-700", "bg-purple-600");
+      this.sendBtn.classList.replace("bg-slate-800", "bg-[#d4077b]");
       this.sendBtn.classList.remove("border", "border-rose-500/50");
       if (window.lucide) lucide.createIcons();
       this.scrollToBottom();
@@ -460,11 +460,11 @@ class MimicApp {
         this.complianceVal.textContent = state.compliance_score;
         if (this.compliancePill) {
           if (state.compliance_score < 50) {
-            this.compliancePill.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30";
+            this.compliancePill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200";
           } else if (state.compliance_score < 75) {
-            this.compliancePill.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+            this.compliancePill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200";
           } else {
-            this.compliancePill.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+            this.compliancePill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200";
           }
         }
       }
@@ -482,7 +482,7 @@ class MimicApp {
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "suggestion-chip";
-      chip.innerHTML = `<i data-lucide="corner-down-right" class="w-3 h-3 text-purple-400"></i><span>${this.escapeHtml(sugText)}</span>`;
+      chip.innerHTML = `<i data-lucide="corner-down-right" class="w-3 h-3 text-[#d4077b]"></i><span>${this.escapeHtml(sugText)}</span>`;
       chip.addEventListener("click", () => {
         // Disable chips in this container after click
         container.querySelectorAll("button").forEach(b => {
