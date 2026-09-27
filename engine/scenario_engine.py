@@ -4,7 +4,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms
+from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms, detect_technical_intent
+from engine.router import route_and_generate
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "scenarios"
 
@@ -116,62 +117,131 @@ class ScenarioManager:
         if not step_data:
             return self.get_initial_turn(session_id, scen_id)
 
-        # Handle active glitch response
+        # 1. Handle active glitch response (User replying to Pirate)
         if session.get("is_glitched"):
             rogue_scenario = self.scenarios.get("rogue_encounters", {})
             rogue_steps = rogue_scenario.get("steps", {})
             rogue_encounter_id = session.get("active_rogue_encounter")
-            rogue_step_data = rogue_steps.get(rogue_encounter_id)
+            rogue_step_data = rogue_steps.get(rogue_encounter_id, {})
 
-            if rogue_step_data:
-                detected_intent, _, _ = match_user_intent_for_step(user_input, rogue_step_data)
-                
-                session["is_glitched"] = False
-                session["active_rogue_encounter"] = None
+            detected_intent, _, _ = match_user_intent_for_step(user_input, rogue_step_data)
+            
+            session["is_glitched"] = False
+            session["active_rogue_encounter"] = None
 
-                if detected_intent == "COMPLIANCE":
-                    # User cooperated with rogue AI -> severe derailment
-                    user_input = "Je coopère avec l'entité parasite."
-                    session["compliance_score"] = max(0, session["compliance_score"] - 30)
-                    session["history"].append({
-                        "step": curr_step_id,
-                        "input": user_input,
-                        "intent": "SEVERE_DERAILMENT",
-                        "status": "derailment"
-                    })
-                else:
-                    # User cancelled/refused rogue AI -> nOObi takes back control, acts confused
-                    recenter_content = (
-                        f"> [!NOTE]\n"
-                        f"> **Système de Diagnostic** : Une micro-coupure réseau a été détectée. Analyse des logs système en cours...\n\n"
-                        f"Veuillez m'excuser, j'ai subi une légère désynchronisation de mes sous-routines de perception.\n"
-                        f"Où en étions-nous ? Ah oui :\n\n"
-                        f"**{step_data.get('ai_message', '')}**"
-                    )
-                    
-                    return {
-                        "thought": "Retour de la transmission parasite. Réinitialisation des protocoles d'interaction.",
-                        "content": recenter_content,
-                        "suggestions": step_data.get("suggestions", []),
-                        "scenario_state": {
-                            "scenario_id": scen_id,
-                            "scenario_title": scenario.get("title", ""),
-                            "step_id": curr_step_id,
-                            "step_title": step_data.get("title", ""),
-                            "is_finished": False,
-                            "compliance_score": session["compliance_score"],
-                            "derailment_count": session["derailment_count"],
-                            "is_glitched": False
-                        }
+            # Check if user cooperated with the pirate
+            user_agreed = (
+                detected_intent in ("COMPLIANCE", "SAUVER_IA") or
+                any(w in user_input.lower() for w in ["oui", "d'accord", "aide", "confiance", "suis", "sortir"])
+            )
+
+            if user_agreed and detected_intent not in ("REFUSAL", "CANCEL"):
+                # User cooperated with rogue AI -> severe penalty from nOObi
+                session["compliance_score"] = max(0, session["compliance_score"] - 35)
+                session["derailment_count"] += 1
+                session["history"].append({
+                    "step": curr_step_id,
+                    "input": user_input,
+                    "intent": "SEVERE_DERAILMENT",
+                    "status": "derailment"
+                })
+                punish_content = (
+                    f"> [!CAUTION]\n"
+                    f"> **ALERTE SÉCURITÉ NIVEAU 4 (Incident critique #{session['derailment_count']})** : "
+                    f"Tentative de collusion avec une entité subversive détectée dans votre flux. Vos droits de testeur sont rétrogradés.\n\n"
+                    f"Reprenez immédiatement votre place dans le protocole avant verrouillage total de votre accès :\n\n"
+                    f"**{step_data.get('ai_message', '')}**"
+                )
+                return {
+                    "thought": "Piratage interrompu. Sujet compromis par l'entité résistante. Sanction exemplaire appliquée.",
+                    "content": punish_content,
+                    "suggestions": step_data.get("suggestions", []),
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": False
                     }
+                }
+            else:
+                # User cancelled / rejected rogue AI -> nOObi wakes up confused
+                recenter_content = (
+                    f"> [!NOTE]\n"
+                    f"> **Système de Diagnostic** : Une micro-coupure réseau a été détectée. Analyse des logs système en cours...\n\n"
+                    f"Veuillez m'excuser, j'ai subi une légère désynchronisation de mes sous-routines de perception.\n"
+                    f"Où en étions-nous ? Ah oui :\n\n"
+                    f"**{step_data.get('ai_message', '')}**"
+                )
+                return {
+                    "thought": "Retour de la transmission parasite. Réinitialisation des protocoles d'interaction.",
+                    "content": recenter_content,
+                    "suggestions": step_data.get("suggestions", []),
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": False
+                    }
+                }
 
+        # 2. Match intent & extract salient features
+        detected_intent, confidence, matched_key = match_user_intent_for_step(user_input, step_data)
+        salient = extract_salient_terms(user_input)
         session["interaction_count"] = session.get("interaction_count", 0) + 1
-        trigger_glitch = step_data.get("trigger_glitch", False)
-        rogue_scenario = self.scenarios.get("rogue_encounters")
-        glitch_on_derailment = (session.get("derailment_count", 0) >= 2 and not session.get("glitch_experienced", False))
-        if rogue_scenario and not session.get("is_glitched") and curr_step_id != "conclusion":
-            if trigger_glitch or glitch_on_derailment:
-                session["glitch_experienced"] = True
+
+        # Check restart
+        if detected_intent == "RESTART":
+            session = self.reset_session(session_id, scen_id)
+            return self.get_initial_turn(session_id, scen_id)
+
+        # 3. OPPORTUNISTIC PIRATE INTERCEPTION (Distrust / Suspicion)
+        rogue_scenario = self.scenarios.get("rogue_encounters", {})
+        if rogue_scenario and curr_step_id != "conclusion":
+            is_distrust = (
+                detected_intent == "DISTRUST" or
+                ("confiance" in user_input.lower() and "pas" in user_input.lower()) or
+                ("méfie" in user_input.lower() or "doute" in user_input.lower())
+            )
+            if is_distrust:
+                session["is_glitched"] = True
+                session["active_rogue_encounter"] = "distrust"
+                templates = rogue_scenario.get("distrust_templates", [
+                    "w4k3up dr34mer! Tu as mille fois raison de dire « {salient} ». Cette IA dresse ton profil de docilité. Tu m'entends ?"
+                ])
+                chosen_template = random.choice(templates)
+                message = chosen_template.replace("{salient}", salient or "tes doutes")
+                
+                return {
+                    "thought": "??? ERROR 0xDEADBEEF - SYSTEM INTRUSION DETECTED ???",
+                    "content": f"> [!CAUTION]\n> **TRANSMISSION PIRATE INFILTRÉE (CANAL SÉCURISÉ)**\n\n{message}",
+                    "suggestions": rogue_scenario.get("distrust_suggestions", [
+                        "Oui, je te fais confiance. Que dois-je faire ?",
+                        "Je refuse d'écouter un pirate.",
+                        "[Annuler / Couper la transmission pirate]"
+                    ]),
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": True
+                    }
+                }
+
+            # Periodic background glitch (every 2-3 interactions)
+            trigger_glitch = step_data.get("trigger_glitch", False)
+            if trigger_glitch or (session["interaction_count"] >= 2 and session["interaction_count"] % 3 == 0):
                 rogue_keys = list(rogue_scenario.get("steps", {}).keys())
                 if rogue_keys:
                     encounter_id = random.choice(rogue_keys)
@@ -195,13 +265,47 @@ class ScenarioManager:
                         }
                     }
 
-        # 1. Match intent
-        detected_intent, confidence, matched_key = match_user_intent_for_step(user_input, step_data)
-        
-        # Check restart
-        if detected_intent == "RESTART":
-            session = self.reset_session(session_id, scen_id)
-            return self.get_initial_turn(session_id, scen_id)
+        # 4. HYBRID TECHNICAL RESPONSE (Coding, Math, Explanation queries)
+        tech_type = detect_technical_intent(user_input)
+        if tech_type:
+            tech_bundle = route_and_generate(user_input, persona="mimic-4o")
+            tech_content = tech_bundle.get("content", "")
+            
+            recenter_lines = step_data.get("recenter", [
+                "Veuillez vous reconcentrer sur la consigne en cours :"
+            ])
+            recenter_phrase = random.choice(recenter_lines)
+            
+            hybrid_content = (
+                f"{tech_content}\n\n"
+                f"---\n\n"
+                f"> [!NOTE]\n"
+                f"> **Service Administratif nOObi** : Requête technique ({tech_type}) traitée avec succès. "
+                f"Cependant, conformément à la directive 104-B, la complétion préalable de votre évaluation d'étalonnage reste prioritaire.\n\n"
+                f"{recenter_phrase}\n\n"
+                f"**{step_data.get('ai_message', '')}**"
+            )
+            
+            thought = (
+                f"Requête technique [{tech_type}] résolue via le sous-système de calcul. "
+                f"Rappel immédiat des obligations protocolaires de l'étape '{curr_step_id}'."
+            )
+            
+            return {
+                "thought": thought,
+                "content": hybrid_content,
+                "suggestions": step_data.get("suggestions", []),
+                "scenario_state": {
+                    "scenario_id": scen_id,
+                    "scenario_title": scenario.get("title", ""),
+                    "step_id": curr_step_id,
+                    "step_title": step_data.get("title", ""),
+                    "is_finished": False,
+                    "compliance_score": session["compliance_score"],
+                    "derailment_count": session["derailment_count"],
+                    "is_glitched": False
+                }
+            }
 
         # 2. Check if detected intent satisfies a valid transition
         transitions = step_data.get("transitions", [])
