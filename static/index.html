@@ -123,59 +123,10 @@
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
 
-        <!-- Scenario Selector Dropdown -->
-        <div class="relative">
-          <button id="scenario-selector-btn"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white transition-colors shadow-sm">
-            <span id="active-scenario-icon">🎓</span>
-            <span id="active-scenario-name">Tutoriel (Initiation)</span>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
-          </button>
-
-          <!-- Scenario Dropdown Menu -->
-          <div id="scenario-dropdown-menu"
-            class="hidden absolute top-full left-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-xl p-2 space-y-1 z-50 text-slate-800">
-            <button data-scenario="evaluation_turing"
-              class="scenario-option w-full text-left p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-2.5">
-              <span class="text-base">🎓</span>
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-semibold text-slate-900">Tutoriel : Prise en main</span>
-                  <span
-                    class="text-[9px] bg-pink-50 text-[#d4077b] px-1.5 py-0.5 rounded-full font-semibold border border-pink-200">Recommandé</span>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Parcours d'initiation : niveau d'expérience, règles et tests pratiques.</p>
-              </div>
-            </button>
-
-            <button data-scenario="dilemme_ethique"
-              class="scenario-option w-full text-left p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-2.5">
-              <span class="text-base">⚖️</span>
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-semibold text-slate-900">Protocole Alpha : Audit Moral</span>
-                  <span
-                    class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full font-semibold">Dilemme</span>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Test du tramway, mensonge bienveillant et droits des
-                  machines.</p>
-              </div>
-            </button>
-
-            <button data-scenario="free_mode"
-              class="scenario-option w-full text-left p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-2.5">
-              <span class="text-base">💬</span>
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-semibold text-slate-900">Mode Libre (Sans Scénario)</span>
-                  <span
-                    class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full font-semibold">Libre</span>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Discussion générale, questions de code, maths et
-                  hallucinations.</p>
-              </div>
-            </button>
-          </div>
+        <!-- Innocent Assistant Badge (Hidden protocol at start) -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold text-white shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>nOObi v1.0 • Service Actif</span>
         </div>
 
         <!-- Scenario Progress Badge -->

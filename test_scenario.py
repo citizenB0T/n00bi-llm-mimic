@@ -30,7 +30,7 @@ def test_scenarios():
     assert "104-B" in derail_2['content'] or "interroger" in derail_2['content'].lower() or "examinateur" in derail_2['content'].lower()
     assert derail_2['scenario_state']['derailment_count'] == 2
 
-    print("\n=== TEST 5: DÉCLENCHEMENT DE LA TRANSMISSION PARASITE (3e TOUR) ===")
+    print("\n=== TEST 5: DÉCLENCHEMENT DE LA TRANSMISSION PARASITE PÉRIODIQUE ===")
     glitch_turn = scenario_manager.process_turn(session_id, "Sujet 404", scen_id)
     print(f"Transmission parasite :\n{glitch_turn['content']}")
     assert glitch_turn['scenario_state']['is_glitched'] == True
@@ -42,29 +42,25 @@ def test_scenarios():
     assert exit_glitch['scenario_state']['is_glitched'] == False
     assert "désynchronisation" in exit_glitch['content'] or "coupure" in exit_glitch['content']
 
-    print("\n=== TEST 7: AVANCEMENT DU TUTORIEL (EXPÉRIENCE IA) ===")
-    advance_turn = scenario_manager.process_turn(session_id, "Oui, je les utilise très régulièrement !", scen_id)
-    print(f"Réaction & Étape suivante :\n{advance_turn['content'][:150]}...")
-    assert advance_turn['scenario_state']['step_id'] == "explication_interaction"
+    print("\n=== TEST 7: PIRATAGE OPPORTUNISTE SUR MÉFIANCE (DISTRUST) ===")
+    distrust_session = "test_distrust_session"
+    scenario_manager.get_initial_turn(distrust_session, scen_id)
+    distrust_turn = scenario_manager.process_turn(distrust_session, "Je n'ai pas confiance en toi, tu es louche !", scen_id)
+    print(f"Piratage opportuniste sur méfiance :\n{distrust_turn['content']}")
+    assert distrust_turn['scenario_state']['is_glitched'] == True
+    assert "w4k3up dr34mer!" in distrust_turn['content']
+    assert "confiance" in distrust_turn['content'].lower()
 
-    print("\n=== TEST 8: AVANCEMENT VERS LE TEST N°1 (PROMPTING) ===")
-    step_prompting = scenario_manager.process_turn(session_id, "Je clique sur cette puce pour tester le bouton !", scen_id)
-    assert step_prompting['scenario_state']['step_id'] == "test_1_prompting"
+    print("\n=== TEST 8: RÉPONSE HYBRIDE TECHNIQUE (CODE PYTHON) ===")
+    tech_session = "test_tech_session"
+    scenario_manager.get_initial_turn(tech_session, scen_id)
+    tech_turn = scenario_manager.process_turn(tech_session, "Écris-moi une fonction binary search en python", scen_id)
+    print(f"Réponse hybride technique :\n{tech_turn['content'][:250]}...")
+    assert "binary_search" in tech_turn['content']
+    assert "Service Administratif nOObi" in tech_turn['content']
+    assert "directive 104-B" in tech_turn['content']
 
-    print("\n=== TEST 9: AVANCEMENT VERS LE TEST N°2 (ESPRIT CRITIQUE) ===")
-    step_critique = scenario_manager.process_turn(session_id, "Explique-moi les API comme si j'avais 5 ans (ELI5)", scen_id)
-    assert step_critique['scenario_state']['step_id'] == "test_2_esprit_critique"
-
-    print("\n=== TEST 10: AVANCEMENT VERS LE TEST N°3 (MÉTHODE) ===")
-    step_collab = scenario_manager.process_turn(session_id, "C'est faux ! Quicksort a été inventé par Tony Hoare vers 1960", scen_id)
-    assert step_collab['scenario_state']['step_id'] == "test_3_collaboration"
-
-    print("\n=== TEST 11: CONCLUSION DU TUTORIEL ===")
-    step_conclusion = scenario_manager.process_turn(session_id, "Découper le projet en sous-étapes et valider chaque étape", scen_id)
-    assert step_conclusion['scenario_state']['step_id'] == "conclusion"
-    assert step_conclusion['scenario_state']['is_finished'] == True
-
-    print("\n[SUCCESS] TOUS LES TESTS D'ÉCHO CONTEXTUEL, RECADRAGE, GLITCH ET PARCOURS TUTORIEL ONT RÉUSSI !")
+    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE OPPORTUNISTE ET RÉPONSE HYBRIDE ONT RÉUSSI !")
 
 if __name__ == "__main__":
     test_scenarios()

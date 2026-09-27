@@ -101,11 +101,9 @@ async def chat_endpoint(payload: ChatRequest):
     scenario_id = payload.scenario_id
     session_id = payload.session_id or "default_session"
 
-    # Route and synthesize response
-    if scenario_id and scenario_id != "none" and scenario_id != "free_mode":
-        bundle = scenario_manager.process_turn(session_id, user_prompt, scenario_id)
-    else:
-        bundle = route_and_generate(user_prompt)
+    # Unified flow: All messages go through scenario_manager (with hybrid technical response support)
+    scen_id = scenario_id if (scenario_id and scenario_id not in ("none", "free_mode")) else "evaluation_turing"
+    bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id)
 
     CUMULATIVE_STATS["requests_served"] += 1
 
