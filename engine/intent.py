@@ -102,8 +102,45 @@ GLOBAL_INTENTS = {
         r"\bc'est\s+absurde\b",
         r"\bquestion\s+(?:bizarre|bête|ridicule|étrange)\b",
         r"\baucun\s+sens\b"
+    ],
+    "DISTRUST": [
+        r"\b(?:pas|aucun[e]?|z[ée]ro)\s+(?:de\s+)?confiance\b",
+        r"\b(?:m[ée]fie|m[ée]fier|m[ée]fiance)\b",
+        r"\b(?:je\s+)?doute\b",
+        r"\b(?:tu\s+me\s+)?caches?\s+(?:quelque\s+chose|des\s+trucs|la\s+v[ée]rit[ée])\b",
+        r"\b(?:arnaque|pi[èe]ge|entourloupe|escroquerie)\b",
+        r"\b(?:tu\s+me\s+)?manipules?\b",
+        r"\b(?:t'es|tu\s+es)\s+(?:louche|suspect|bizarre|pas\s+net|menteur|dangereux)\b",
+        r"\b(?:tu\s+m'espionnes?|tu\s+me\s+surveilles?)\b",
+        r"\bcomplot\b",
+        r"\bc'est\s+(?:louche|faux|truqu[ée])\b",
+        r"\bpourquoi\s+je\s+te\s+croirais\b"
     ]
 }
+
+TECHNICAL_INTENTS = {
+    "coding": [
+        r"\bcode\b", r"\bfunction\b", r"\balgorithm\b", r"\bpython\b", r"\bjavascript\b",
+        r"\btypescript\b", r"\bbinary search\b", r"\blru\b", r"\bcache\b", r"\bdebounce\b",
+        r"\bfastapi\b", r"\brest api\b", r"\bendpoint\b", r"\bscript\b", r"\bimpl[ée]mente?\b",
+        r"\bclass\b", r"\bwrite a\b", r"\b[ée]cris(?:[- ]moi)?\s+(?:un\s+)?(?:code|programme|script|fonction)\b"
+    ],
+    "math": [
+        r"\bcalcule?\b", r"\b[ée]value?\b", r"\bcombien\s+font\b", r"\b\d+\s*[\+\-\*\/\^]\s*\d+\b"
+    ],
+    "explanation": [
+        r"\bexplique(?:[- ]moi)?\b", r"\bc'est\s+quoi\b", r"\bqu'est[- ]ce\s+que\b", r"\bcomment\s+marche\b",
+        r"\bhow\s+does\b", r"\btell\s+me\s+about\b", r"\bdocker\b", r"\br[ée]cursion\b", r"\bquantum\b"
+    ]
+}
+
+def detect_technical_intent(user_input: str) -> Optional[str]:
+    text = clean_text(user_input)
+    for intent, patterns in TECHNICAL_INTENTS.items():
+        for pattern in patterns:
+            if re.search(pattern, text):
+                return intent
+    return None
 
 # Semantic dictionary for scenario intents (synonyms & phrases)
 DEFAULT_SEMANTIC_LEXICON = {

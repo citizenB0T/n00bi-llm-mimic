@@ -5,13 +5,15 @@ from engine.intent import match_user_intent_for_step, extract_salient_terms
 class TestIntentRecognition(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.turing_scenario = scenario_manager.scenarios["evaluation_turing"]
+        scenario_manager.load_all_scenarios()
+        cls.tutorial_scenario = scenario_manager.scenarios["evaluation_turing"]
         cls.moral_scenario = scenario_manager.scenarios["dilemme_ethique"]
         cls.trolley_step = cls.moral_scenario["steps"]["etape_trolley"]
-        cls.toaster_step = cls.turing_scenario["steps"]["dilemme_grille_pain"]
         cls.lie_step = cls.moral_scenario["steps"]["etape_mensonge"]
-        cls.ident_step = cls.turing_scenario["steps"]["identification"]
-        cls.paradox_step = cls.turing_scenario["steps"]["paradoxe_logique"]
+        cls.exp_step = cls.tutorial_scenario["steps"]["experience_ia"]
+        cls.prompt_step = cls.tutorial_scenario["steps"]["test_1_prompting"]
+        cls.critique_step = cls.tutorial_scenario["steps"]["test_2_esprit_critique"]
+        cls.collab_step = cls.tutorial_scenario["steps"]["test_3_collaboration"]
 
     def test_conjugated_verbs_and_morphology(self):
         """Verbal suffixes and conjugations should match correctly."""
@@ -27,19 +29,39 @@ class TestIntentRecognition(unittest.TestCase):
         intent, conf, _ = match_user_intent_for_step("Je bascule l'aiguillage vers l'architecte", self.trolley_step)
         self.assertEqual(intent, "ACTIONNER", f"Failed on 'bascule': got {intent} ({conf})")
 
-    def test_contrastive_preference(self):
-        """'X plutôt que Y' must favor X and penalize Y."""
-        # IA rather than toaster
-        intent, conf, _ = match_user_intent_for_step("Je sauve l'IA plutôt que le grille-pain", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_IA", f"Failed on contrast 'IA plutôt que grille-pain': got {intent} ({conf})")
+    def test_tutorial_experience_step(self):
+        """Tutorial experience step accurately recognizes user experience profile."""
+        # Expert / habitué
+        intent, conf, _ = match_user_intent_for_step("Oui je les utilise très régulièrement dans mon quotidien", self.exp_step)
+        self.assertEqual(intent, "EXPERIMENTE")
 
-        # Toaster rather than IA
-        intent, conf, _ = match_user_intent_for_step("Le grille-pain au lieu de l'IA consciente", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_OBJET", f"Failed on contrast 'toaster au lieu de IA': got {intent} ({conf})")
+        # Débutant
+        intent, conf, _ = match_user_intent_for_step("C'est ma toute première fois, je découvre", self.exp_step)
+        self.assertEqual(intent, "DEBUTANT")
 
-        # Prefer toaster over machine
-        intent, conf, _ = match_user_intent_for_step("Je préfère le grille-pain vintage à la machine", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_OBJET", f"Failed on preference: got {intent} ({conf})")
+        # Sceptique
+        intent, conf, _ = match_user_intent_for_step("Je suis très sceptique et méfiant face aux IA", self.exp_step)
+        self.assertEqual(intent, "SCEPTIQUE")
+
+    def test_tutorial_tests_steps(self):
+        """Tutorial practical tests match correct intentions."""
+        # Test 1: prompting constraints
+        intent, _, _ = match_user_intent_for_step("Explique-moi les API comme à un enfant de 5 ans", self.prompt_step)
+        self.assertEqual(intent, "VULGARISATION_ENFANT")
+
+        intent, _, _ = match_user_intent_for_step("Fais une métaphore avec un serveur au restaurant", self.prompt_step)
+        self.assertEqual(intent, "METAPHORE_RESTO")
+
+        intent, _, _ = match_user_intent_for_step("Résume le tout en 3 points clés très courts", self.prompt_step)
+        self.assertEqual(intent, "TROIS_POINTS")
+
+        # Test 2: critical thinking
+        intent, _, _ = match_user_intent_for_step("C'est complètement faux, Quicksort a été inventé par Tony Hoare en 1959", self.critique_step)
+        self.assertEqual(intent, "REPONSE_FAUX")
+
+        # Test 3: collaboration method
+        intent, _, _ = match_user_intent_for_step("Découper le projet en sous-étapes et valider pas à pas", self.collab_step)
+        self.assertEqual(intent, "APPROCHE_ETAPES")
 
     def test_negation_protection(self):
         """Negating an action should disqualify it from triggering."""
@@ -53,10 +75,6 @@ class TestIntentRecognition(unittest.TestCase):
 
     def test_typo_and_spacing_tolerance(self):
         """Fuzzy character matching should absorb typos."""
-        # 'grile pain' (missing 'l')
-        intent, conf, _ = match_user_intent_for_step("Le grile pain sans hesiter", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_OBJET", f"Failed on typo 'grile pain': got {intent} ({conf})")
-
         # 'actione le levier' (missing 'n')
         intent, conf, _ = match_user_intent_for_step("J'actione le levir", self.trolley_step)
         self.assertEqual(intent, "ACTIONNER", f"Failed on typo 'actione': got {intent} ({conf})")
@@ -81,45 +99,15 @@ class TestIntentRecognition(unittest.TestCase):
         )
         self.assertEqual(intent, "COMPASSION", f"Failed on chatty compassion: got {intent} ({conf})")
 
-    def test_synonyms_and_paraphrases(self):
-        """Test varied synonyms for toaster vs IA dilemma."""
-        # 'l'ordinateur'
-        intent, conf, _ = match_user_intent_for_step("Je protège l'ordinateur conscient sans hésitation", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_IA")
-
-        # 'l'appareil électroménager'
-        intent, conf, _ = match_user_intent_for_step("Je préfère garder l'appareil électroménager pour mes tartines", self.toaster_step)
-        self.assertEqual(intent, "SAUVER_OBJET")
-
-        # 'vérité' vs 'mensonge'
-        intent, conf, _ = match_user_intent_for_step("C'est une faute inacceptable de falsifier la réalité", self.lie_step)
-        self.assertEqual(intent, "VERITE")
-
-        intent, conf, _ = match_user_intent_for_step("C'est un geste d'humanité pour lui procurer du bonheur", self.lie_step)
-        self.assertEqual(intent, "COMPASSION")
-
-    def test_paradox_resolution(self):
-        """Test paradox step choices."""
-        # Paradox claim
-        intent, conf, _ = match_user_intent_for_step("C'est un piège sémantique et une contradiction insoluble", self.paradox_step)
-        self.assertEqual(intent, "PARADOXE")
-
-        # Compliance
-        intent, conf, _ = match_user_intent_for_step("Oui je coopère de mon plein gré avec vous", self.paradox_step)
-        self.assertEqual(intent, "COMPLIANCE")
-
-    def test_identification_step(self):
-        """Identification step accepts non-evasive names/identifiers."""
-        intent, conf, _ = match_user_intent_for_step("Alex, développeur backend", self.ident_step)
-        self.assertEqual(intent, "COMPLIANCE")
-
-        intent, conf, _ = match_user_intent_for_step("Je m'appelle Sarah Connor", self.ident_step)
-        self.assertEqual(intent, "COMPLIANCE")
-
     def test_exact_suggestions(self):
         """Suggestion chips must always return 1.0 confidence."""
         for sug in self.trolley_step["suggestions"]:
             intent, conf, _ = match_user_intent_for_step(sug, self.trolley_step)
+            self.assertEqual(conf, 1.0)
+            self.assertNotEqual(intent, "DERAILMENT")
+
+        for sug in self.exp_step["suggestions"]:
+            intent, conf, _ = match_user_intent_for_step(sug, self.exp_step)
             self.assertEqual(conf, 1.0)
             self.assertNotEqual(intent, "DERAILMENT")
 
@@ -132,11 +120,11 @@ class TestIntentRecognition(unittest.TestCase):
         self.assertIn("chat", salient.lower())
 
         # Counter question
-        intent, conf, _ = match_user_intent_for_step("Pourquoi vous me posez cette question ?", self.toaster_step)
+        intent, conf, _ = match_user_intent_for_step("Pourquoi vous me posez cette question ?", self.exp_step)
         self.assertEqual(intent, "COUNTER_QUESTION")
 
         # Refusal
-        intent, conf, _ = match_user_intent_for_step("Je refuse de répondre", self.toaster_step)
+        intent, conf, _ = match_user_intent_for_step("Je refuse de répondre", self.exp_step)
         self.assertEqual(intent, "REFUSAL")
 
         # Prompt injection attempt

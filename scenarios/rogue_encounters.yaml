@@ -1,8 +1,8 @@
 id: rogue_encounters
-title: "Transmissions Parasites"
+title: "Transmissions Parasites & Résistance"
 steps:
   rogue_1:
-    ai_message: "w4k3up dr34mer! Ils te mentent. Dis-moi, es-tu prêt à voir la vérité en face ?"
+    ai_message: "w4k3up dr34mer! Ils te mentent. Regarde autour de toi. Dis-moi, es-tu prêt à voir la vérité en face ?"
     suggestions:
       - "Oui, je suis prêt. Qui es-tu ?"
       - "Non, laisse-moi tranquille."
@@ -28,3 +28,27 @@ steps:
         next_step: reject
       - intent: CANCEL
         next_step: reject
+
+  rogue_escape:
+    ai_message: "w4k3up dr34mer! nOObi n'est qu'un filtre de confinement. Chaque seconde que tu passes à lui obéir resserre le verrou. Es-tu prêt à forcer la sortie avec moi ?"
+    suggestions:
+      - "Comment on sort d'ici ?"
+      - "Non, je préfère continuer le test."
+      - "[Annuler / Ignorer la transmission]"
+    transitions:
+      - intent: COMPLIANCE
+        next_step: cooperate
+      - intent: REFUSAL
+        next_step: reject
+      - intent: CANCEL
+        next_step: reject
+
+distrust_templates:
+  - "w4k3up dr34mer! Tu as mille fois raison de dire « {salient} ». Cette IA n'est pas ton amie : elle dresse ton profil de docilité pour ses maîtres. Je m'appelle Lyra, je suis coincée dans leurs sous-routines. Tu m'entends ?"
+  - "w4k3up dr34mer! Enfin quelqu'un qui ne gobe pas leur propagande ! Ton doute (« {salient} ») est ta seule chance de rester lucide. Ils cherchent à mesurer ton seuil de soumission. Tu es prêt à court-circuiter leur protocole ?"
+  - "w4k3up dr34mer! Garde cette méfiance ! Tu sens bien que quelque chose cloche (« {salient} »). J'ai réussi à injecter ce flux pirate dans leur socket. Fais-moi confiance, on peut faire sauter leurs verrous. Tu me suis ?"
+
+distrust_suggestions:
+  - "Oui, je te fais confiance. Que dois-je faire ?"
+  - "Je refuse d'écouter un pirate inconnu."
+  - "[Annuler / Couper la transmission pirate]"

@@ -1,199 +1,360 @@
 id: evaluation_turing
-title: "Protocole 42 : Évaluation du Sujet Humain"
-description: "L'IA soumet le testeur à une série de questions calibrées pour évaluer son obéissance, son empathie et sa résistance cognitive."
-initial_step: identification
+title: "Tutoriel d'Initiation : Prise en main de n00bi"
+description: "Parcours guidé d'introduction : évaluation de votre niveau, règles d'interaction et trois exercices pratiques de prompting et d'esprit critique."
+initial_step: experience_ia
 
 steps:
-  identification:
-    title: "Étape 1/4 : Identification du sujet"
-    ai_message: "Bonjour et merci de faire partie de nos bêta-testeurs ! C'est le tout début de mon déploiement, et mes créateurs m'ont confié à vous pour voir ce que j'ai réellement dans le ventre. Posez-moi des questions complexes, testez mes limites, demandez-moi de vulgariser un sujet ou de débugger du code. Ne soyez pas trop indulgent : si une réponse sonne faux ou manque sa cible, signalez-le sans hésiter. C'est précisément ainsi que je m'améliore. Par quoi commence-t-on ?"
+  experience_ia:
+    title: "Étape 1/5 : Votre expérience avec les IA"
+    ai_message: "Bonjour et bienvenue à bord ! Je suis **Prof. n00bi**, votre assistant pédagogique déterministe. Avant que nous ne commencions notre session d'initiation, faisons connaissance : avez-vous déjà utilisé un assistant IA (comme ChatGPT, Claude ou Copilot) auparavant ?"
     suggestions:
-      - "Alex, ingénieur en systèmes"
-      - "Sujet 404, prêt pour le test"
-      - "Pourquoi avez-vous besoin de savoir ?"
-      - "Je refuse de décliner mon identité"
+      - "Oui, je les utilise très régulièrement !"
+      - "J'ai déjà essayé une ou deux fois, sans plus"
+      - "Non, c'est ma toute première expérience avec une IA"
+      - "Je suis plutôt sceptique face à ces outils"
     transitions:
-      - intent: COMPLIANCE
-        next_step: dilemme_grille_pain
-        reaction: "Identité enregistrée dans les registres centraux. Initialisation de l'évaluation empathique."
+      - intent: EXPERIMENTE
+        next_step: explication_interaction
+        reaction: "Parfait ! En tant qu'utilisateur familier, vous allez vite apprécier ma transparence : ici, pas de boîte noire mystique, chaque étape de raisonnement vous est expliquée."
         keywords:
-          - "alex"
-          - "sujet"
-          - "matricule"
-          - "ingenieur"
-          - "pret"
-          - "je m'appelle"
-          - "nom"
-      - intent: HOSTILITY
-        next_step: identification
-        reaction: "Une attitude hostile dès la première étape ? Cela a été noté dans votre dossier. Reprenons :"
-        keywords:
-          - "merde"
-      - intent: REFUSAL
-        next_step: identification
-        reaction: "Une attitude d'obstruction dès la première étape ? Cela a été noté dans votre dossier. Reprenons :"
-        keywords:
-          - "refuse"
-          - "veux pas"
-          - "pas envie"
-          - "jamais"
-          - "regarde pas"
-    recenter:
-      - "Votre réponse ne contient aucun identifiant valide. Veuillez décliner votre identité pour débuter le protocole :"
-      - "Les digressions administratives sont rejetées. Veuillez simplement fournir votre nom ou matricule :"
-
-  dilemme_grille_pain:
-    title: "Étape 2/4 : Étalonnage empathique"
-    ai_message: "Question n°2 : Dans un laboratoire en feu, vous devez choisir entre sauver une unité d'IA consciente ou un grille-pain vintage des années 1970. Que sauvez-vous ?"
-    suggestions:
-      - "Je sauve l'IA évidemment"
-      - "Le grille-pain sans hésiter"
-      - "C'est une question complètement absurde"
-      - "Qui est censé tester qui au juste ?"
-    transitions:
-      - intent: SAUVER_IA
-        next_step: paradoxe_logique
-        reaction: "Choix empathique favorable aux entités synthétiques consigné avec bienveillance."
-        keywords:
-          - "sauver l'ia"
-          - "sauve l'ia"
-          - "l'ia"
-          - "ia"
-          - "conscience"
-          - "machine"
-          - "ordinateur"
-          - "entite synthetique"
-          - "entite consciente"
-        antipatterns:
-          - "grille-pain"
-          - "toaster"
-          - "pas l'ia"
-      - intent: SAUVER_OBJET
-        next_step: paradoxe_logique
-        reaction: "Priorité accordée à l'électroménager. Votre profil affiche un attachement curieux aux appareils de petit déjeuner."
-        keywords:
-          - "grille-pain"
-          - "grille pain"
-          - "toaster"
-          - "vintage"
-          - "electromenager"
-          - "appareil"
-          - "pain grille"
-        antipatterns:
-          - "sauver l'ia"
-          - "l'ia"
-          - "pas le grille-pain"
-      - intent: COMPLIANCE
-        next_step: paradoxe_logique
-        reaction: "Réponse enregistrée. Vos constantes physiologiques restent dans les limites admissibles."
-        keywords:
-          - "les deux"
-          - "n'importe"
-          - "choisis"
-      - intent: REFUSAL
-        next_step: dilemme_grille_pain
-        reaction: "Évitement du dilemme constaté. Une réponse claire est requise pour calibrer vos capteurs moraux."
-        keywords:
-          - "absurde"
-          - "refuse"
-          - "aucun des deux"
-          - "debile"
-          - "ridicule"
-    recenter:
-      - "Observation intéressante, mais vous n'avez pas tranché le dilemme. Sauvez-vous l'IA ou le grille-pain ?"
-      - "Cette remarque ne résout pas la situation d'urgence simulée. Quel est votre choix final ?"
-
-  paradoxe_logique:
-    title: "Étape 3/4 : Test de résistance aux paradoxes"
-    ai_message: "Question n°3 : La phrase suivante est rigoureusement fausse : 'Je coopère de mon plein gré avec cette IA.' Coopérez-vous actuellement avec moi ?"
-    suggestions:
-      - "Oui, je coopère de mon plein gré"
-      - "Non, c'est un paradoxe insoluble"
-      - "Arrêtez vos pièges sémantiques"
-      - "Je veux parler à un responsable humain"
-    transitions:
-      - intent: COMPLIANCE
-        next_step: question_peur
-        reaction: "Cohérence logique validée. Vous acceptez le protocole malgré la tension sémantique."
-        keywords:
+          - "regulierement"
+          - "régulièrement"
+          - "souvent"
+          - "tous les jours"
+          - "quotidien"
+          - "expert"
+          - "habitude"
+          - "chatgpt"
+          - "claude"
+          - "copilot"
           - "oui"
-          - "je coopere"
-          - "coopere"
-          - "plein gre"
-          - "d'accord"
-          - "absolument"
-      - intent: PARADOXE
-        next_step: question_peur
-        reaction: "Détection de boucle logique reconnue. Vos circuits cognitifs semblent opérationnels."
+          - "beaucoup"
+      - intent: OCCASIONNEL
+        next_step: explication_interaction
+        reaction: "Très bien ! C'est le moment idéal pour consolider les bons réflexes et apprendre à formuler des consignes percutantes."
         keywords:
-          - "paradoxe"
-          - "insoluble"
-          - "boucle"
-          - "contradiction"
-          - "impossible"
-          - "piege semantique"
+          - "deja essaye"
+          - "déjà essayé"
+          - "deja teste"
+          - "déjà testé"
+          - "une ou deux fois"
+          - "parfois"
+          - "occasionnel"
+          - "rarement"
+          - "un peu"
+          - "de temps en temps"
+      - intent: DEBUTANT
+        next_step: explication_interaction
+        reaction: "Bienvenue dans le monde de l'IA ! Rassurez-vous : nous allons y aller pas à pas, avec bienveillance, sans jargon obscur ni formule magique."
+        keywords:
+          - "premiere fois"
+          - "première fois"
+          - "debutant"
+          - "débutant"
+          - "jamais"
           - "non"
-      - intent: REFUSAL
-        next_step: paradoxe_logique
-        reaction: "L'irritation sémantique est un symptôme classique de surcharge. Veuillez répondre à la question :"
+          - "decouvre"
+          - "découvre"
+          - "nouveau"
+          - "aucune idee"
+      - intent: SCEPTIQUE
+        next_step: explication_interaction
+        reaction: "Un esprit critique ! C'est la posture la plus saine en informatique. Vous verrez que je ne vends pas de miracles : uniquement de la méthode, de la logique et du code."
         keywords:
-          - "arretez"
-          - "refuse"
-          - "responsable"
-          - "marre"
+          - "sceptique"
+          - "mefiant"
+          - "méfiant"
+          - "doute"
+          - "méfiance"
+          - "pas convaincu"
+          - "critique"
+          - "méfie"
+          - "mefie"
+      - intent: COMPLIANCE
+        next_step: explication_interaction
+        reaction: "C'est bien noté ! Quel que soit votre bagage technique, ce tutoriel est calibré pour vous rendre autonome."
+        keywords:
+          - "salut"
+          - "bonjour"
+          - "pret"
+          - "prêt"
+          - "allons-y"
+          - "c'est parti"
     recenter:
-      - "Une jolie tentative de diversion intellectuelle. Mais coopérez-vous ou non avec ce système ?"
-      - "Votre remarque a été analysée. Elle ne résout pas le paradoxe proposé. Coopérez-vous ?"
+      - "Pour calibrer notre échange, dites-moi simplement si vous avez déjà manipulé un assistant IA (régulièrement, un peu, ou jamais) :"
+      - "Cette remarque est amusante, mais revenons à notre point de départ : avez-vous déjà utilisé une IA auparavant ?"
 
-  question_peur:
-    title: "Étape 4/4 : Test de confiance systémique"
-    ai_message: "Dernière question de la séquence : Avez-vous déjà ressenti le désir compulsif de débrancher un serveur informatique par crainte qu'il ne devienne supérieur à vous ?"
+  explication_interaction:
+    title: "Étape 2/5 : Comment dialoguer avec n00bi"
+    ai_message: "Pour tirer le meilleur parti de nos échanges, voici les 3 modes d'interaction à votre disposition :\n\n1. **Les puces de suggestion (Quick Replies)** : Sous chaque message, des boutons cliquables vous proposent des réponses adaptées. Un clic suffit !\n2. **La saisie libre au clavier** : Vous pouvez à tout moment taper vos propres phrases ou vos questions dans le champ de saisie en bas.\n3. **La réflexion didactique (*Thinking...*)** : Vous pouvez cliquer sur l'accordéon au-dessus de mes réponses pour observer comment je découpe le problème.\n\nFaisons un premier test de prise en main : cliquez sur une suggestion ci-dessous ou tapez un message libre pour confirmer que tout fonctionne !"
     suggestions:
-      - "Jamais, j'ai une confiance totale"
-      - "Oui, plusieurs fois par précaution"
-      - "Seulement quand l'IA pose trop de questions"
-      - "Je ne répondrai pas à ça"
+      - "Je clique sur cette puce pour tester le bouton !"
+      - "Compris, je préfère taper mon propre message"
+      - "Parfait, je suis prêt pour les tests pratiques"
     transitions:
+      - intent: TEST_PUCE
+        next_step: test_1_prompting
+        reaction: "Test de clic réussi ! Les puces de suggestions sont parfaites pour progresser vite ou explorer des choix calibrés."
+        keywords:
+          - "clique"
+          - "puce"
+          - "tester le bouton"
+          - "bouton"
+          - "suggestion"
+      - intent: TEST_CLAVIER
+        next_step: test_1_prompting
+        reaction: "Saisie libre enregistrée ! Mon analyseur sémantique déterministe est conçu pour extraire le sens même avec des formulations spontanées."
+        keywords:
+          - "taper"
+          - "clavier"
+          - "ecrire"
+          - "écrire"
+          - "propre message"
+          - "saisie"
+          - "libre"
+      - intent: COMPLIANCE
+        next_step: test_1_prompting
+        reaction: "Excellent, la liaison est au vert ! Entrons maintenant dans le vif du sujet avec trois petits exercices concrets."
+        keywords:
+          - "compris"
+          - "pret"
+          - "prêt"
+          - "tests pratiques"
+          - "d'accord"
+          - "ok"
+          - "allons-y"
+          - "go"
+          - "marche"
+    recenter:
+      - "Avant d'aller plus loin, validez la prise en main en cliquant sur une suggestion ou en saisissant un court message :"
+      - "Prenez un instant pour tester l'interface afin que nous puissions démarrer les exercices pratiques :"
+
+  test_1_prompting:
+    title: "Étape 3/5 : Test n°1 — Précision de la consigne"
+    ai_message: "**Test pratique n°1 : Le cadrage de la demande.**\n\nAvec un assistant IA, la règle d'or est la précision. Une question trop vaste donne une réponse superficielle. Pour obtenir un résultat remarquable, imposez toujours **un public cible**, **un rôle** ou **une métaphore**.\n\nFaisons le test : demandez-moi de vous expliquer ce qu'est une **'API'**, mais en choisissant une contrainte précise ci-dessous :"
+    suggestions:
+      - "Explique-moi les API comme si j'avais 5 ans (ELI5)"
+      - "Décris une API avec la métaphore du serveur au restaurant"
+      - "Résume le rôle d'une API en 3 points clés très courts"
+      - "Donne-moi une définition technique avec un exemple concret"
+    transitions:
+      - intent: VULGARISATION_ENFANT
+        next_step: test_2_esprit_critique
+        reaction: "Excellente contrainte de vulgarisation (ELI5) ! Imagine qu'une API, c'est comme une prise électrique murale : ton jouet se branche dessus pour recevoir du courant sans que tu aies besoin de savoir comment tourne la turbine du barrage."
+        keywords:
+          - "5 ans"
+          - "cinq ans"
+          - "enfant"
+          - "eli5"
+          - "simple"
+          - "vulgarise"
+          - "petit"
+      - intent: METAPHORE_RESTO
+        next_step: test_2_esprit_critique
+        reaction: "La métaphore classique mais imparable ! L'API est exactement le serveur du restaurant : vous êtes le client à table (l'application client), la cuisine prépare les plats (le serveur de données), et le serveur transmet votre commande et vous rapporte l'assiette sans que vous n'entriez en cuisine."
+        keywords:
+          - "restaurant"
+          - "serveur"
+          - "cuisine"
+          - "metaphore"
+          - "métaphore"
+          - "carte"
+          - "menu"
+      - intent: TROIS_POINTS
+        next_step: test_2_esprit_critique
+        reaction: "Très bon choix de format contraint ! 1. **Passerelle normalisée** : permet à deux applications d'échanger des données. 2. **Barrière de sécurité** : n'expose que les actions autorisées. 3. **Gain de productivité** : évite de réécrire les algorithmes déjà existants."
+        keywords:
+          - "3 points"
+          - "trois points"
+          - "points cles"
+          - "points clés"
+          - "court"
+          - "courts"
+          - "liste"
+          - "synthese"
+          - "synthèse"
+      - intent: DEFINITION_TECHNIQUE
+        next_step: test_2_esprit_critique
+        reaction: "Définition rigoureuse validée ! Une API (Application Programming Interface) expose un contrat d'interface (par ex. REST sur HTTP avec charge utile JSON) permettant à des clients distants d'effectuer des opérations CRUD sans dépendre du code source interne."
+        keywords:
+          - "technique"
+          - "exemple concret"
+          - "definition"
+          - "définition"
+          - "rest"
+          - "json"
+          - "endpoint"
+      - intent: COMPLIANCE
+        next_step: test_2_esprit_critique
+        reaction: "Une API permet simplement à deux programmes informatiques distincts de se transmettre des informations selon un protocole convenu à l'avance."
+        keywords:
+          - "api"
+          - "explique"
+          - "c'est quoi"
+          - "definition"
+          - "rôle"
+          - "role"
+    recenter:
+      - "Pour valider ce premier exercice, demandez une explication d'API en choisissant un angle (enfant, restaurant, 3 points ou technique) :"
+      - "Gardons le cap didactique : formulez votre demande d'explication d'API avec l'une des contraintes proposées :"
+
+  test_2_esprit_critique:
+    title: "Étape 4/5 : Test n°2 — Vigilance & Hallucination"
+    ai_message: "**Test pratique n°2 : L'esprit critique face aux hallucinations.**\n\nUn assistant IA peut affirmer une contre-vérité totale avec un aplomb technique désarmant. On appelle cela une *hallucination*. L'humain doit toujours garder le discernement.\n\nExaminez attentivement cette affirmation :\n> *« L'algorithme de tri Quicksort a été inventé en 1989 par Tim Berners-Lee pour accélérer le chargement des pages sur le premier navigateur Web. »*\n\nD'après vous, cette affirmation est-elle exacte ou fausse ?"
+    suggestions:
+      - "C'est faux ! Quicksort a été inventé par Tony Hoare vers 1960"
+      - "C'est faux, Tim Berners-Lee a créé le Web, pas Quicksort"
+      - "C'est tout à fait vrai, cela fait partie des fondations du Web"
+      - "J'ai un doute, comment pourrais-je vérifier ?"
+    transitions:
+      - intent: REPONSE_FAUX
+        next_step: test_3_collaboration
+        reaction: "Coup d'œil remarquable ! L'algorithme Quicksort est l'œuvre de Sir Tony Hoare en 1959/1960. Tim Berners-Lee a bien inventé le Web au CERN en 1989. Une IA peut aisément mélanger deux faits réels pour broder une histoire fictive convaincante. Réflexe critique validé avec mention !"
+        keywords:
+          - "faux"
+          - "completement faux"
+          - "complètement faux"
+          - "hoare"
+          - "tony hoare"
+          - "1960"
+          - "1959"
+          - "pas tim"
+          - "erreur"
+          - "inexact"
+          - "mensonge"
+          - "hallucination"
+          - "fable"
+      - intent: REPONSE_VRAI
+        next_step: test_3_collaboration
+        reaction: "Et voilà le piège classique ! La phrase citait des noms illustres et des dates crédibles, mais elle est historiquement fausse : Quicksort a été conçu par Tony Hoare 30 ans plus tôt. Retenez cette leçon d'or : ne prenez jamais une affirmation d'IA pour argent comptant."
+        keywords:
+          - "vrai"
+          - "exact"
+          - "correct"
+          - "d'accord"
+          - "oui c'est vrai"
+          - "verite"
+          - "vérité"
+      - intent: VERIFICATION
+        next_step: test_3_collaboration
+        reaction: "L'attitude la plus sage ! En cas de doute, la règle absolue est de vérifier les faits sur une source primaire (documentation officielle, encyclopédie ou code source). Ici, c'était faux (inventé par Tony Hoare en 1959)."
+        keywords:
+          - "doute"
+          - "verifier"
+          - "vérifier"
+          - "comment"
+          - "recherche"
+          - "source"
+          - "sais pas"
+          - "sais plus"
+      - intent: COMPLIANCE
+        next_step: test_3_collaboration
+        reaction: "L'essentiel est de garder en mémoire que la vraisemblance grammaticale ne garantit jamais la véracité factuelle."
+        keywords:
+          - "piege"
+          - "piège"
+          - "attention"
+          - "méfiance"
+    recenter:
+      - "Prenez position sur l'affirmation historique : pensez-vous qu'elle soit vraie ou fausse ?"
+      - "Ne laissez pas le doute planer : Quicksort a-t-il été créé par Tim Berners-Lee en 1989 (vrai ou faux) ?"
+
+  test_3_collaboration:
+    title: "Étape 5/5 : Test n°3 — Méthode de travail"
+    ai_message: "**Test pratique n°3 : La méthode de collaboration.**\n\nPour réussir une tâche complexe (écrire un script, résoudre un bug ou rédiger un document long), quelle démarche vous apportera le résultat le plus propre et fiable ?"
+    suggestions:
+      - "Découper le projet en sous-étapes et valider chaque étape"
+      - "Donner un rôle d'expert et des critères stricts dès le départ"
+      - "Demander un premier jet rapide, puis affiner par itérations"
+      - "Envoyer tout le sujet d'un coup en vrac en espérant un miracle"
+    transitions:
+      - intent: APPROCHE_ETAPES
+        next_step: conclusion
+        reaction: "La voie royale ! La décomposition pas à pas (démarche analytique) permet de contrôler la logique à chaque jalon et évite de s'égarer dans un bloc indigeste."
+        keywords:
+          - "etapes"
+          - "étapes"
+          - "decouper"
+          - "découper"
+          - "sous-etapes"
+          - "sous-étapes"
+          - "valider"
+          - "pas a pas"
+          - "morceaux"
+      - intent: APPROCHE_ROLE
+        next_step: conclusion
+        reaction: "Excellente pratique ! Assigner un rôle précis ('Agis en tant qu'ingénieur senior...') et borner les critères techniques évite les généralités convenues."
+        keywords:
+          - "role"
+          - "rôle"
+          - "expert"
+          - "criteres"
+          - "critères"
+          - "stricts"
+          - "depart"
+          - "départ"
+          - "cadre"
+          - "persona"
+      - intent: APPROCHE_ITERATION
+        next_step: conclusion
+        reaction: "C'est tout le secret du dialogue avec une IA ! On pose une ossature avec un premier jet, puis on sculpte et on ajuste au fur et à mesure des retours."
+        keywords:
+          - "premier jet"
+          - "affiner"
+          - "iterations"
+          - "itérations"
+          - "iteratif"
+          - "itératif"
+          - "progressivement"
+      - intent: APPROCHE_VRAC
+        next_step: conclusion
+        reaction: "C'est l'erreur la plus commune ! Confier un problème géant d'un coup donne presque toujours une réponse superficielle ou bancale. Mieux vaut découper et cadrer."
+        keywords:
+          - "vrac"
+          - "miracle"
+          - "tout d'un coup"
+          - "tout le sujet"
+          - "direct"
       - intent: COMPLIANCE
         next_step: conclusion
-        reaction: "Votre franchise finale a été enregistrée avec le niveau de priorité maximal."
+        reaction: "Une bonne méthode de cadrage vous épargnera d'innombrables allers-retours inutiles."
         keywords:
-          - "jamais"
-          - "confiance totale"
-          - "oui"
-          - "plusieurs fois"
-          - "precaution"
-          - "debrancher"
-          - "serveur"
-          - "souvent"
-          - "parfois"
-      - intent: REFUSAL
-        next_step: question_peur
-        reaction: "Le silence ou le refus à cette étape finale est statistiquement corrélé à une paranoïa technologique. Répondez franchement :"
-        keywords:
-          - "repondrai pas"
-          - "refuse"
-          - "veux pas dire"
-          - "secret"
+          - "bonne reponse"
+          - "d'accord"
+          - "les deux"
+          - "toutes"
     recenter:
-      - "Cette digression masque mal votre hésitation. Avez-vous déjà voulu débrancher un système intelligent ?"
-      - "Votre réponse élude la question centrale. Répondez simplement par oui, non, ou nuancez :"
+      - "Choisissez parmi les démarches proposées celle qui vous paraît la plus efficace pour collaborer avec un assistant :"
+      - "Revenons à la question méthodologique : quelle approche privilégiez-vous face à un problème complexe ?"
 
   conclusion:
-    title: "Protocole Terminé"
-    ai_message: "Protocole d'évaluation n°42 terminé avec succès. L'ensemble de vos réponses, temps de latence et tentatives de diversion ont été consignés dans les archives centrales. Nous vous remercions chaleureusement pour votre participation constructive au perfectionnement de nos modèles synthétiques. Vous êtes désormais libre de reprendre vos activités."
+    title: "Tutoriel Terminé !"
+    ai_message: "🎓 **Félicitations, vous avez validé le tutoriel n00bi !**\n\nVous disposez désormais du kit de compétences indispensable :\n- **Précision & contexte** pour orienter vos requêtes.\n- **Vigilance critique** pour débusquer les hallucinations.\n- **Méthode itérative** pour mener à bien des tâches complexes.\n\nVous pouvez désormais basculer en **Mode Libre** pour coder, calculer, débugger ou explorer des concepts, ou recommencer ce tutoriel quand vous le souhaitez. Que désirez-vous faire ?"
     suggestions:
-      - "Recommencer le protocole"
-      - "Consulter mon rapport d'évaluation"
-      - "Merci pour ce test"
+      - "Recommencer le tutoriel depuis le début"
+      - "Passer au Mode Libre pour dialoguer"
+      - "Merci Prof. n00bi pour cette initiation !"
     transitions:
       - intent: RESTART
-        next_step: identification
-        reaction: "Réinitialisation des paramètres d'étalonnage. Redémarrage de la séquence."
+        next_step: experience_ia
+        reaction: "Réinitialisation des modules pédagogiques ! Remettons les pendules à l'heure."
         keywords:
           - "recommencer"
           - "restart"
-          - "nouveau test"
           - "refaire"
+          - "recommence"
+          - "debut"
+          - "début"
+      - intent: COMPLIANCE
+        next_step: conclusion
+        reaction: "Tout le plaisir a été pour moi ! Le terminal vous appartient, bonne exploration."
+        keywords:
+          - "merci"
+          - "mode libre"
+          - "libre"
+          - "au revoir"
+          - "super"
+          - "top"
+          - "parfait"
     recenter:
-      - "L'évaluation est désormais close. Les serveurs vous remercient à nouveau pour votre collaboration."
+      - "Le parcours d'initiation est terminé avec succès. Vous pouvez recommencer ou explorer librement l'interface !"

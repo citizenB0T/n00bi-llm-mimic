@@ -9,7 +9,7 @@ class MimicApp {
     this.abortController = null;
 
     this.scenarioMetadata = {
-      "evaluation_turing": { name: "Protocole 42 (Turing)", icon: "🧪" },
+      "evaluation_turing": { name: "Tutoriel (Initiation)", icon: "🎓" },
       "dilemme_ethique": { name: "Protocole Alpha (Moral)", icon: "⚖️" },
       "free_mode": { name: "Mode Libre", icon: "💬" }
     };

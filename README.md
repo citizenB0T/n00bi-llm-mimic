@@ -67,7 +67,7 @@ n00bi/
 ├── test_engine.py              # Suite de tests du moteur et du routeur n00bi
 ├── test_scenario.py            # Tests d'intégration des scénarios, du recadrage et du glitch
 ├── scenarios/                  # Protocoles déclaratifs en YAML
-│   ├── evaluation_turing.yaml  # Protocole 42 (Test de conformité & Turing)
+│   ├── evaluation_turing.yaml  # Tutoriel d'Initiation & Prise en main de n00bi
 │   ├── dilemme_ethique.yaml    # Protocole Alpha (Audit moral & tramway)
 │   └── rogue_encounters.yaml   # Interférences parasites en cas de déviation répétée
 ├── engine/

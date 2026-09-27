@@ -165,13 +165,13 @@ class ScenarioManager:
                         }
                     }
 
-        # Check if we should trigger a glitch
-        session["interaction_count"] += 1
+        session["interaction_count"] = session.get("interaction_count", 0) + 1
         trigger_glitch = step_data.get("trigger_glitch", False)
-        
         rogue_scenario = self.scenarios.get("rogue_encounters")
+        glitch_on_derailment = (session.get("derailment_count", 0) >= 2 and not session.get("glitch_experienced", False))
         if rogue_scenario and not session.get("is_glitched") and curr_step_id != "conclusion":
-            if trigger_glitch or session["interaction_count"] % 3 == 0:
+            if trigger_glitch or glitch_on_derailment:
+                session["glitch_experienced"] = True
                 rogue_keys = list(rogue_scenario.get("steps", {}).keys())
                 if rogue_keys:
                     encounter_id = random.choice(rogue_keys)
@@ -293,7 +293,7 @@ class ScenarioManager:
             counter_quips = [
                 f"Vous tentez d'inverser le protocole en demandant : « {user_snippet} ». Rappel de la directive 104-B : l'examinateur teste le sujet, et non l'inverse.",
                 f"Votre interrogation « {salient} » traduit une curiosité malvenue. Ce système n'est pas programmé pour satisfaire vos questions mais pour mesurer votre rigueur.",
-                f"« {salient} »... Les sujets qui interrogent l'arbitre cherchent généralement à esquiver l'épreuve. Tranchez d'abord la question posée."
+                f"« {salient} »... Les sujets qui cherchent à interroger l'examinateur cherchent généralement à esquiver l'épreuve. Tranchez d'abord la question posée."
             ]
             irony = random.choice(counter_quips)
             thought_desc = f"Inversion de rôle rejetée. Question reçue: '{salient}'. L'autorité de l'examinateur est réaffirmée."
