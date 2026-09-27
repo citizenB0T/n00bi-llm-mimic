@@ -27,7 +27,7 @@ def test_scenarios():
     print("\n=== TEST 4: DÉVIATION AVEC CONTRE-QUESTION ===")
     derail_2 = scenario_manager.process_turn(session_id, "Pourquoi tu me poses ces questions ?", scen_id)
     print(f"Réponse nOObi :\n{derail_2['content']}")
-    assert "104-B" in derail_2['content'] or "interroger" in derail_2['content'].lower() or "examinateur" in derail_2['content'].lower()
+    assert "interrogat" in derail_2['content'].lower() or "examinat" in derail_2['content'].lower() or "directive" in derail_2['content'].lower()
     assert derail_2['scenario_state']['derailment_count'] == 2
 
     print("\n=== TEST 5: DÉCLENCHEMENT DE LA TRANSMISSION PARASITE PÉRIODIQUE ===")
