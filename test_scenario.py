@@ -60,7 +60,39 @@ def test_scenarios():
     assert "Service Administratif nOObi" in tech_turn['content']
     assert "directive 104-B" in tech_turn['content']
 
-    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE OPPORTUNISTE ET RÉPONSE HYBRIDE ONT RÉUSSI !")
+    print("\n=== TEST 9: DÉFINITION WIKIPÉDIA RÉUSSIE (LE TROU NOIR) ===")
+    wiki_session = "test_wiki_session"
+    scenario_manager.get_initial_turn(wiki_session, scen_id)
+    wiki_turn = scenario_manager.process_turn(wiki_session, "Dis-moi c'est quoi le trou noir", scen_id)
+    print(f"Réponse Wikipédia nOObi :\n{wiki_turn['content'][:300]}...")
+    assert "Trou noir" in wiki_turn['content'] or "trou noir" in wiki_turn['content'].lower()
+    assert wiki_turn['scenario_state']['compliance_score'] == 95, "La complaisance doit baisser de 5%"
+    assert wiki_turn['scenario_state']['derailment_count'] == 1
+    # Check intro and outro present
+    assert any(intro[:15] in wiki_turn['content'] for intro in [
+        "Ah ! C'est formidable",
+        "Une excellente question",
+        "J'adore quand vous explorez",
+        "Quelle belle soif d'apprendre"
+    ])
+    assert any(outro[:15] in wiki_turn['content'] for outro in [
+        "Mais ne reviendrait-on pas",
+        "Une parenthèse bien instructive",
+        "Bien, la curiosité est satisfaite",
+        "Fascinant, n'est-ce pas"
+    ])
+
+    print("\n=== TEST 10: DÉFINITION WIKIPÉDIA ÉCHEC (TROU DE MÉMOIRE) ===")
+    fail_turn = scenario_manager.process_turn(wiki_session, "Parle-moi de zzzxxxyyyqqq789123inexistant", scen_id)
+    print(f"Réponse échec nOObi :\n{fail_turn['content']}")
+    assert any(fail[:15] in fail_turn['content'] for fail in [
+        "Hmm, il semblerait",
+        "Tiens, mes registres",
+        "Mes archives centrales"
+    ])
+    assert fail_turn['scenario_state']['compliance_score'] == 90, "La complaisance doit encore baisser de 5%"
+
+    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE ET WIKIPÉDIA ONT RÉUSSI !")
 
 if __name__ == "__main__":
     test_scenarios()

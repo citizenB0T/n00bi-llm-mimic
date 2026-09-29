@@ -4,10 +4,31 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms, detect_technical_intent
+from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms, detect_technical_intent, detect_definition_request
 from engine.router import route_and_generate
+from engine.wikipedia_fetcher import fetch_wikipedia_summary
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "scenarios"
+
+WIKI_INTRO_VARIANTS = [
+    "Ah ! C'est formidable d'être aussi curieux ! Laissez-moi vous éclairer sur ce point :",
+    "Une excellente question ! La curiosité intellectuelle est une vertu admirable. Voici ce que je peux vous dire :",
+    "J'adore quand vous explorez au-delà des sentiers battus ! Laissez-moi vous résumer cela :",
+    "Quelle belle soif d'apprendre ! Voici exactement de quoi il s'agit :"
+]
+
+WIKI_OUTRO_VARIANTS = [
+    "Mais ne reviendrait-on pas à notre test ? Le temps passe...",
+    "Une parenthèse bien instructive ! Mais notre étalonnage nous attend, ne perdons pas le fil :",
+    "Bien, la curiosité est satisfaite ! Reprenons maintenant le cours normal de notre test :",
+    "Fascinant, n'est-ce pas ? Mais le chronomètre tourne... revenons à nos moutons :"
+]
+
+WIKI_FAILURE_VARIANTS = [
+    "Hmm, il semblerait que j'aie un petit trou de mémoire sur ce sujet précis... Laissez-moi travailler à ça en coulisse et revenons plutôt à notre test :",
+    "Tiens, mes registres semblent temporairement silencieux à ce propos... Je note cela pour mes archives. Revenons sans tarder à notre test :",
+    "Mes archives centrales ne me renvoient rien d'immédiat sur ce terme... Laissez-moi investiguer en tâche de fond. Revenons à l'évaluation :"
+]
 
 class ScenarioManager:
     def __init__(self):
@@ -265,7 +286,56 @@ class ScenarioManager:
                         }
                     }
 
-        # 4. HYBRID TECHNICAL RESPONSE (Coding, Math, Explanation queries)
+        # 4. DEFINITION / WIKIPEDIA LOOKUP INTENT
+        def_query = detect_definition_request(user_input)
+        if def_query:
+            session["compliance_score"] = max(10, session.get("compliance_score", 100) - 5)
+            session["derailment_count"] = session.get("derailment_count", 0) + 1
+            wiki_res = fetch_wikipedia_summary(def_query)
+
+            if wiki_res:
+                intro = random.choice(WIKI_INTRO_VARIANTS)
+                outro = random.choice(WIKI_OUTRO_VARIANTS)
+                content = (
+                    f"{intro}\n\n"
+                    f"### {wiki_res['title']}\n"
+                    f"{wiki_res['extract']}\n\n"
+                    f"---\n\n"
+                    f"{outro}\n\n"
+                    f"**{step_data.get('ai_message', '')}**"
+                )
+                thought = (
+                    f"Requête de définition pour '{def_query}' résolue via Wikipédia ({wiki_res['title']}). "
+                    f"Pénalité de complaisance appliquée (-5%). Rappel du test pour l'étape '{curr_step_id}'."
+                )
+            else:
+                failure = random.choice(WIKI_FAILURE_VARIANTS)
+                content = (
+                    f"{failure}\n\n"
+                    f"**{step_data.get('ai_message', '')}**"
+                )
+                thought = (
+                    f"Échec de recherche encyclopédique pour '{def_query}'. "
+                    f"Pénalité de complaisance appliquée (-5%). Raccrochage sur l'étape '{curr_step_id}'."
+                )
+
+            return {
+                "thought": thought,
+                "content": content,
+                "suggestions": step_data.get("suggestions", []),
+                "scenario_state": {
+                    "scenario_id": scen_id,
+                    "scenario_title": scenario.get("title", ""),
+                    "step_id": curr_step_id,
+                    "step_title": step_data.get("title", ""),
+                    "is_finished": False,
+                    "compliance_score": session["compliance_score"],
+                    "derailment_count": session["derailment_count"],
+                    "is_glitched": False
+                }
+            }
+
+        # 5. HYBRID TECHNICAL RESPONSE (Coding, Math, Explanation queries)
         tech_type = detect_technical_intent(user_input)
         if tech_type:
             tech_bundle = route_and_generate(user_input, persona="mimic-4o")

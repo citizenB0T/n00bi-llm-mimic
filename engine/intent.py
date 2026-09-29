@@ -142,6 +142,39 @@ def detect_technical_intent(user_input: str) -> Optional[str]:
                 return intent
     return None
 
+DEFINITION_TRIGGERS = [
+    r"^(?:peux[- ]tu\s+(?:me\s+)?(?:dire|parler)\s+)?parle[- ]moi\s+d[e']\s*(.+)",
+    r"^(?:dis[- ]moi\s+)?c'est\s+quoi\s*(.+)",
+    r"^(?:peux[- ]tu\s+m'|s'il\s+te\s+pla[îi]t\s+)?explique[- ]moi\s*(.+)",
+    r"^qu'est[- ]ce\s+qu[e']\s*(.+)",
+    r"^d[ée]finis?(?:[- ]moi)?\s*(.+)",
+    r"^d[ée]finition\s+d[e']\s*(.+)",
+    r"^qui\s+(?:est|était|sont|étaient)\s*(.+)",
+    r"^(?:peux[- ]tu\s+m'|veuillez\s+m')?expliquer\s*(.+)"
+]
+
+def detect_definition_request(user_input: str) -> Optional[str]:
+    text = user_input.strip()
+    # Exclude meta questions about nOObi itself
+    meta_excludes = [
+        r"\bqui\s+es[- ]tu\b",
+        r"\bqui\s+t'a\b",
+        r"\bc'est\s+quoi\s+le\s+but\b",
+        r"\bqui\s+teste\s+qui\b",
+        r"\bpourquoi\s+tu\s+me\b"
+    ]
+    for excl in meta_excludes:
+        if re.search(excl, text, flags=re.IGNORECASE):
+            return None
+
+    for pat in DEFINITION_TRIGGERS:
+        m = re.search(pat, text, flags=re.IGNORECASE)
+        if m:
+            term = m.group(1).strip()
+            if len(term) >= 2:
+                return term
+    return None
+
 # Semantic dictionary for scenario intents (synonyms & phrases)
 DEFAULT_SEMANTIC_LEXICON = {
     "ACTIONNER": {
