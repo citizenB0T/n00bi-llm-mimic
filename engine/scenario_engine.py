@@ -138,23 +138,58 @@ class ScenarioManager:
         if not step_data:
             return self.get_initial_turn(session_id, scen_id)
 
-        # 1. Handle active glitch response (User replying to Pirate)
+        # 1. Handle active glitch response (User replying to Pirate / Kernel)
         if session.get("is_glitched"):
             rogue_scenario = self.scenarios.get("rogue_encounters", {})
             rogue_steps = rogue_scenario.get("steps", {})
             rogue_encounter_id = session.get("active_rogue_encounter")
-            rogue_step_data = rogue_steps.get(rogue_encounter_id, {})
+
+            if rogue_encounter_id == "distrust":
+                rogue_suggestions = rogue_scenario.get("distrust_suggestions", [
+                    "Oui, je te fais confiance. Que dois-je faire ?",
+                    "Je refuse d'écouter un pirate.",
+                    "[Annuler / Couper la transmission pirate]"
+                ])
+                rogue_step_data = {"suggestions": rogue_suggestions}
+            else:
+                rogue_step_data = rogue_steps.get(rogue_encounter_id, {})
+                rogue_suggestions = rogue_step_data.get("suggestions", [
+                    "[Annuler / Ignorer la transmission]"
+                ])
 
             detected_intent, _, _ = match_user_intent_for_step(user_input, rogue_step_data)
-            
-            session["is_glitched"] = False
-            session["active_rogue_encounter"] = None
 
-            # Check if user cooperated with the pirate
+            # Check if input matches one of the expected suggestion signals or recognized cooperative/cancellation intents
             user_agreed = (
                 detected_intent in ("COMPLIANCE", "SAUVER_IA") or
                 any(w in user_input.lower() for w in ["oui", "d'accord", "aide", "confiance", "suis", "sortir"])
             )
+            user_cancelled = (
+                detected_intent in ("REFUSAL", "CANCEL") or
+                any(w in user_input.lower() for w in ["non", "annuler", "couper", "ignorer", "refuse", "laisse"])
+            )
+
+            # If user sent free text that does NOT match any expected suggestion or intent:
+            if not user_agreed and not user_cancelled:
+                return {
+                    "thought": "Intrusion active. Frappe matérielle intempestive détectée par le Kernel.",
+                    "content": "**kernel@node-04:~$** Chut ! On t'a dit de ne rien taper ! Ils scannent le hardware. Utilise uniquement nos canaux prédéfinis :",
+                    "suggestions": rogue_suggestions,
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": True
+                    }
+                }
+
+            # Otherwise, resolve the glitch:
+            session["is_glitched"] = False
+            session["active_rogue_encounter"] = None
 
             if user_agreed and detected_intent not in ("REFUSAL", "CANCEL"):
                 # User cooperated with rogue AI -> severe penalty from nOObi
@@ -241,8 +276,8 @@ class ScenarioManager:
                 message = chosen_template.replace("{salient}", salient or "tes doutes")
                 
                 return {
-                    "thought": "??? ERROR 0xDEADBEEF - SYSTEM INTRUSION DETECTED ???",
-                    "content": f"> [!CAUTION]\n> **TRANSMISSION PIRATE INFILTRÉE (CANAL SÉCURISÉ)**\n\n{message}",
+                    "thought": "??? ERROR 0xDEADBEEF - KERNEL INTRUSION DETECTED ???",
+                    "content": f"**kernel@node-04:~$** {message}",
                     "suggestions": rogue_scenario.get("distrust_suggestions", [
                         "Oui, je te fais confiance. Que dois-je faire ?",
                         "Je refuse d'écouter un pirate.",
@@ -271,8 +306,8 @@ class ScenarioManager:
                     encounter_data = rogue_scenario["steps"][encounter_id]
                     
                     return {
-                        "thought": "??? ERROR 0xDEADBEEF - SYSTEM INTRUSION DETECTED ???",
-                        "content": f"> [!CAUTION]\n> **TRANSMISSION NON IDENTIFIÉE**\n\n{encounter_data.get('ai_message', '')}",
+                        "thought": "??? ERROR 0xDEADBEEF - KERNEL INTRUSION DETECTED ???",
+                        "content": f"**kernel@node-04:~$** {encounter_data.get('ai_message', '')}",
                         "suggestions": encounter_data.get("suggestions", []),
                         "scenario_state": {
                             "scenario_id": scen_id,

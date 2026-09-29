@@ -92,7 +92,20 @@ def test_scenarios():
     ])
     assert fail_turn['scenario_state']['compliance_score'] == 90, "La complaisance doit encore baisser de 5%"
 
-    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE ET WIKIPÉDIA ONT RÉUSSI !")
+    print("\n=== TEST 11: VERROUILLAGE SAISIE KERNEL (TENTATIVE CLAVIER EN PLEIN GLITCH) ===")
+    kernel_session = "test_kernel_lock_session"
+    scenario_manager.get_initial_turn(kernel_session, scen_id)
+    # Trigger distrust glitch
+    glitch_turn = scenario_manager.process_turn(kernel_session, "Je n'ai pas confiance en toi", scen_id)
+    assert glitch_turn['scenario_state']['is_glitched'] == True
+    # Attempt to bypass and type free text
+    bypassed_turn = scenario_manager.process_turn(kernel_session, "Pourquoi je devrais t'écouter pirate ?", scen_id)
+    print(f"Rappel à l'ordre du Kernel :\n{bypassed_turn['content']}")
+    assert "On t'a dit de ne rien taper" in bypassed_turn['content']
+    assert bypassed_turn['scenario_state']['is_glitched'] == True, "L'état de glitch doit rester actif"
+    assert len(bypassed_turn['suggestions']) > 0
+
+    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE, WIKIPÉDIA ET KERNEL ONT RÉUSSI !")
 
 if __name__ == "__main__":
     test_scenarios()

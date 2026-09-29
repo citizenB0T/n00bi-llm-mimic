@@ -47,17 +47,50 @@ class MimicApp {
     // Stats Elements
     this.vramStat = document.getElementById("vram-saved-stat");
     this.tokensStat = document.getElementById("total-tokens-stat");
+
+    // Kernel Glitch UI
+    this.kernelWarningHud = document.getElementById("kernel-warning-hud");
+    this.isGlitched = false;
+    this.hudTimer = null;
   }
 
   initEvents() {
+    // Intercept click on locked chat form during glitch
+    this.chatForm.addEventListener("click", (e) => {
+      if (this.isGlitched && !e.target.closest("button.kernel-cmd-btn")) {
+        this.triggerShakeGlitchEffect();
+        this.showKernelWarningHud();
+      }
+    });
+
     // Form submit
     this.chatForm.addEventListener("submit", (e) => {
       e.preventDefault();
+      if (this.isGlitched) {
+        this.triggerShakeGlitchEffect();
+        this.showKernelWarningHud();
+        return;
+      }
       this.handleSubmit();
+    });
+
+    // Prompt input focus check
+    this.promptInput.addEventListener("focus", () => {
+      if (this.isGlitched) {
+        this.triggerShakeGlitchEffect();
+        this.showKernelWarningHud();
+        this.promptInput.blur();
+      }
     });
 
     // Enter to submit, Shift+Enter for newline (IME safe)
     this.promptInput.addEventListener("keydown", (e) => {
+      if (this.isGlitched) {
+        e.preventDefault();
+        this.triggerShakeGlitchEffect();
+        this.showKernelWarningHud();
+        return;
+      }
       if (e.key === "Enter" && !e.shiftKey) {
         if (e.isComposing || e.keyCode === 229) return;
         e.preventDefault();
@@ -122,6 +155,8 @@ class MimicApp {
     this.messagesList.innerHTML = "";
     this.promptInput.value = "";
     this.promptInput.style.height = "auto";
+    this.isGlitched = false;
+    this.enableGlitchInputLock(false);
   }
 
   startScenario(scenId) {
@@ -149,9 +184,15 @@ class MimicApp {
     }
   }
 
-  async handleSubmit() {
-    const text = this.promptInput.value.trim();
+  async handleSubmit(forcedText = null) {
+    const text = (forcedText !== null ? forcedText : this.promptInput.value).trim();
     if (!text) return;
+
+    if (this.isGlitched && forcedText === null) {
+      this.triggerShakeGlitchEffect();
+      this.showKernelWarningHud();
+      return;
+    }
 
     if (this.isGenerating) {
       if (this.abortController) {
@@ -163,9 +204,11 @@ class MimicApp {
     // Hide welcome hero
     this.welcomeHero.classList.add("hidden");
 
-    // Reset textarea
-    this.promptInput.value = "";
-    this.promptInput.style.height = "auto";
+    // Reset textarea if it was a manual user input
+    if (forcedText === null) {
+      this.promptInput.value = "";
+      this.promptInput.style.height = "auto";
+    }
 
     // Add user message
     this.appendUserMessage(text);
@@ -405,20 +448,74 @@ class MimicApp {
       this.isGenerating = false;
       this.abortController = null;
 
-      // Restore submit button
-      this.sendBtn.innerHTML = `<i data-lucide="arrow-up" class="w-4 h-4"></i>`;
-      this.sendBtn.classList.replace("bg-slate-800", "bg-[#d4077b]");
-      this.sendBtn.classList.remove("border", "border-rose-500/50");
+      // Restore submit button if not glitched
+      if (!this.isGlitched) {
+        this.sendBtn.innerHTML = `<i data-lucide="arrow-up" class="w-4 h-4"></i>`;
+        this.sendBtn.classList.replace("bg-slate-800", "bg-[#d4077b]");
+        this.sendBtn.classList.remove("border", "border-rose-500/50");
+        this.sendBtn.disabled = false;
+      }
       if (window.lucide) lucide.createIcons();
       this.scrollToBottom();
     }
   }
 
+  enableGlitchInputLock(isLocked) {
+    if (isLocked) {
+      this.promptInput.readOnly = true;
+      this.promptInput.placeholder = "🔒 CANAL COMPROMIS — SAISIE MATÉRIELLE DÉSACTIVÉE";
+      this.sendBtn.disabled = true;
+      this.sendBtn.innerHTML = `<i data-lucide="lock" class="w-4 h-4 text-red-400"></i>`;
+      this.chatForm.classList.add("locked-glitch");
+      if (window.lucide) lucide.createIcons();
+    } else {
+      this.promptInput.readOnly = false;
+      this.promptInput.placeholder = "Posez une question ou répondez à nOObi...";
+      this.sendBtn.disabled = false;
+      this.sendBtn.innerHTML = `<i data-lucide="arrow-up" class="w-4 h-4"></i>`;
+      this.chatForm.classList.remove("locked-glitch");
+      this.hideKernelWarningHud();
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+
+  showKernelWarningHud() {
+    if (!this.kernelWarningHud) return;
+    this.kernelWarningHud.classList.remove("hidden");
+    if (this.hudTimer) clearTimeout(this.hudTimer);
+    this.hudTimer = setTimeout(() => {
+      this.hideKernelWarningHud();
+    }, 3500);
+  }
+
+  hideKernelWarningHud() {
+    if (!this.kernelWarningHud) return;
+    this.kernelWarningHud.classList.add("hidden");
+    if (this.hudTimer) {
+      clearTimeout(this.hudTimer);
+      this.hudTimer = null;
+    }
+  }
+
+  triggerShakeGlitchEffect() {
+    if (!this.chatForm) return;
+    this.chatForm.classList.remove("animate-shake-glitch");
+    void this.chatForm.offsetWidth;
+    this.chatForm.classList.add("animate-shake-glitch");
+    setTimeout(() => {
+      this.chatForm.classList.remove("animate-shake-glitch");
+    }, 400);
+  }
+
   updateScenarioUI(state) {
     if (state.is_glitched) {
+      this.isGlitched = true;
       document.body.classList.add("glitch-mode");
+      this.enableGlitchInputLock(true);
     } else {
+      this.isGlitched = false;
       document.body.classList.remove("glitch-mode");
+      this.enableGlitchInputLock(false);
     }
 
     if (state.scenario_id && state.scenario_id !== "free_mode") {
@@ -446,24 +543,44 @@ class MimicApp {
     container.innerHTML = "";
     container.classList.remove("hidden");
 
-    suggestions.forEach(sugText => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "suggestion-chip";
-      chip.innerHTML = `<i data-lucide="corner-down-right" class="w-3 h-3 text-[#d4077b]"></i><span>${this.escapeHtml(sugText)}</span>`;
-      chip.addEventListener("click", () => {
-        // Disable chips in this container after click
-        container.querySelectorAll("button").forEach(b => {
-          b.disabled = true;
-          b.classList.add("opacity-40", "cursor-not-allowed");
-        });
-        this.promptInput.value = sugText;
-        this.handleSubmit();
-      });
-      container.appendChild(chip);
-    });
+    const isGlitch = this.isGlitched || document.body.classList.contains("glitch-mode");
 
-    if (window.lucide) lucide.createIcons();
+    if (isGlitch) {
+      container.className = "kernel-terminal-suggestions";
+      suggestions.forEach(sugText => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "kernel-cmd-btn";
+        btn.innerHTML = `<span class="kernel-prompt">$</span> <span class="kernel-cmd-text">${this.escapeHtml(sugText)}</span>`;
+        btn.addEventListener("click", () => {
+          this.hideKernelWarningHud();
+          container.querySelectorAll("button").forEach(b => {
+            b.disabled = true;
+            b.classList.add("opacity-40", "cursor-not-allowed");
+          });
+          this.handleSubmit(sugText);
+        });
+        container.appendChild(btn);
+      });
+    } else {
+      container.className = "suggestions-container";
+      suggestions.forEach(sugText => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "suggestion-chip";
+        chip.innerHTML = `<i data-lucide="corner-down-right" class="w-3 h-3 text-[#d4077b]"></i><span>${this.escapeHtml(sugText)}</span>`;
+        chip.addEventListener("click", () => {
+          container.querySelectorAll("button").forEach(b => {
+            b.disabled = true;
+            b.classList.add("opacity-40", "cursor-not-allowed");
+          });
+          this.handleSubmit(sugText);
+        });
+        container.appendChild(chip);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
     this.scrollToBottom();
   }
 
