@@ -426,3 +426,153 @@ body.glitch-mode::after {
 .animate-shake-glitch {
   animation: shakeGlitch 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
+
+/* ========================================================= */
+/* SIDEBAR EXCHANGE AUDIT LOG                              */
+/* ========================================================= */
+
+.log-entry {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.log-entry-user {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+.log-entry-user:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.log-entry-noobi {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+}
+.log-entry-noobi:hover {
+  border-color: var(--voo-pink);
+  box-shadow: 0 2px 6px rgba(212, 7, 123, 0.1);
+  transform: translateY(-1px);
+}
+
+.log-entry-kernel {
+  background: #090e0b;
+  border-color: #1a3821;
+}
+.log-entry-kernel:hover {
+  border-color: #38ef7d;
+  box-shadow: 0 0 10px rgba(56, 239, 125, 0.25);
+  transform: translateY(-1px);
+}
+
+.log-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.log-badge-user {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.log-badge-noobi {
+  background: #fce7f3;
+  color: var(--voo-pink);
+  border: 1px solid #fbcfe8;
+}
+
+.log-badge-kernel {
+  background: #112817;
+  color: #38ef7d;
+  border: 1px solid #1a4d28;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.log-timestamp {
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #94a3b8;
+}
+
+.log-preview {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #475569;
+  margin: 0;
+}
+
+.log-entry-kernel .log-preview {
+  color: #86efac;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+}
+
+.log-entry-kernel .log-timestamp {
+  color: #22c55e;
+}
+
+/* Chat message highlight pulse when clicking a log entry */
+@keyframes highlightPulse {
+  0% { transform: scale(1); outline: 2px solid transparent; }
+  50% { transform: scale(1.01); outline: 2px solid var(--voo-pink); box-shadow: 0 0 16px rgba(212, 7, 123, 0.3); }
+  100% { transform: scale(1); outline: 2px solid transparent; }
+}
+
+.highlight-pulse {
+  animation: highlightPulse 1.2s ease-in-out;
+}
+
+/* GLITCH MODE AUDIT LOG OVERRIDES */
+body.glitch-mode #sidebar {
+  background-color: #060606 !important;
+  border-color: #330000 !important;
+}
+
+body.glitch-mode #log-header-title {
+  color: #ff3333 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+body.glitch-mode #log-counter {
+  background-color: #330000 !important;
+  color: #ff4444 !important;
+}
+
+body.glitch-mode .log-entry-user {
+  background: #0f0a0a !important;
+  border-color: #451a1a !important;
+}
+body.glitch-mode .log-entry-user .log-preview {
+  color: #fca5a5 !important;
+}
+
+body.glitch-mode .log-entry-noobi {
+  background: #180910 !important;
+  border-color: #581c38 !important;
+}
+body.glitch-mode .log-entry-noobi .log-preview {
+  color: #f472b6 !important;
+}
+
+body.glitch-mode .log-entry-kernel {
+  background: #041208 !important;
+  border-color: #166534 !important;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.15);
+}
+body.glitch-mode .log-entry-kernel:hover {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.4) !important;
+}

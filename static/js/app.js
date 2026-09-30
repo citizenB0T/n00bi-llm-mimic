@@ -52,6 +52,14 @@ class MimicApp {
     this.kernelWarningHud = document.getElementById("kernel-warning-hud");
     this.isGlitched = false;
     this.hudTimer = null;
+
+    // Exchange Audit Log UI
+    this.exchangeLogContainer = document.getElementById("exchange-log-container");
+    this.logItemsContainer = document.getElementById("log-items");
+    this.logEmptyState = document.getElementById("log-empty-state");
+    this.logCounter = document.getElementById("log-counter");
+    this.logHeaderTitle = document.getElementById("log-header-title");
+    this.logCount = 0;
   }
 
   initEvents() {
@@ -157,6 +165,7 @@ class MimicApp {
     this.promptInput.style.height = "auto";
     this.isGlitched = false;
     this.enableGlitchInputLock(false);
+    this.clearLog();
   }
 
   startScenario(scenId) {
@@ -227,15 +236,24 @@ class MimicApp {
   }
 
   appendUserMessage(text) {
+    const messageId = `msg-user-${Date.now()}`;
     const msgDiv = document.createElement("div");
+    msgDiv.id = messageId;
     msgDiv.className = "flex justify-end";
     msgDiv.innerHTML = `
-      <div class="max-w-[85%] rounded-2xl bg-slate-900 text-white px-5 py-3 text-sm shadow-sm">
+      <div class="max-w-[85%] rounded-2xl bg-slate-900 text-white px-5 py-3 text-sm shadow-sm transition-all duration-300">
         <p class="whitespace-pre-wrap leading-relaxed">${this.escapeHtml(text)}</p>
       </div>
     `;
     this.messagesList.appendChild(msgDiv);
     this.scrollToBottom();
+
+    this.addLogEntry({
+      type: "user",
+      sender: "Utilisateur",
+      text: text,
+      targetId: messageId
+    });
   }
 
   async streamAssistantResponse(config) {
@@ -249,9 +267,9 @@ class MimicApp {
 
     // Create assistant DOM container
     const msgCard = document.createElement("div");
-    msgCard.className = "flex items-start gap-3.5 max-w-[95%]";
-
     const messageId = `msg-${Date.now()}`;
+    msgCard.id = messageId;
+    msgCard.className = "flex items-start gap-3.5 max-w-[95%]";
     msgCard.innerHTML = `
       <div class="w-8 h-8 rounded-full bg-[#121417] text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-sm">
         n<span class="text-[#d4077b]">O</span>
@@ -448,6 +466,17 @@ class MimicApp {
       this.isGenerating = false;
       this.abortController = null;
 
+      // Log assistant message (nOObi or Kernel)
+      if (accumulatedContent.trim()) {
+        const isKernel = accumulatedContent.includes("kernel@node-04:~$") || this.isGlitched;
+        this.addLogEntry({
+          type: isKernel ? "kernel" : "noobi",
+          sender: isKernel ? "Kernel" : "nOObi",
+          text: accumulatedContent,
+          targetId: messageId
+        });
+      }
+
       // Restore submit button if not glitched
       if (!this.isGlitched) {
         this.sendBtn.innerHTML = `<i data-lucide="arrow-up" class="w-4 h-4"></i>`;
@@ -512,10 +541,12 @@ class MimicApp {
       this.isGlitched = true;
       document.body.classList.add("glitch-mode");
       this.enableGlitchInputLock(true);
+      if (this.logHeaderTitle) this.logHeaderTitle.textContent = "LOG INTERCEPTÉ [KERNEL]";
     } else {
       this.isGlitched = false;
       document.body.classList.remove("glitch-mode");
       this.enableGlitchInputLock(false);
+      if (this.logHeaderTitle) this.logHeaderTitle.textContent = "Log des Échanges";
     }
 
     if (state.scenario_id && state.scenario_id !== "free_mode") {
@@ -597,6 +628,82 @@ class MimicApp {
 
   scrollToBottom() {
     this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+  }
+
+  addLogEntry({ type, sender, text, targetId }) {
+    if (!this.logItemsContainer) return;
+
+    if (this.logEmptyState) {
+      this.logEmptyState.classList.add("hidden");
+    }
+
+    this.logCount = (this.logCount || 0) + 1;
+    if (this.logCounter) {
+      this.logCounter.textContent = this.logCount;
+    }
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Clean text preview (strip markdown symbols like **, ###, > [!NOTE], etc.)
+    let preview = text
+      .replace(/^kernel@node-04:\~\$\s*/i, "")
+      .replace(/^>\s*\[!.*?\]/gm, "")
+      .replace(/^[#*`>_~\-]+/gm, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\n+/g, " ")
+      .trim();
+
+    if (preview.length > 95) {
+      preview = preview.substring(0, 92) + "...";
+    }
+
+    const entryCard = document.createElement("div");
+    entryCard.className = `log-entry log-entry-${type}`;
+    entryCard.setAttribute("data-target", targetId);
+    entryCard.title = "Cliquer pour afficher dans la discussion";
+
+    let iconName = "bot";
+    if (type === "user") iconName = "user";
+    else if (type === "kernel") iconName = "terminal";
+
+    entryCard.innerHTML = `
+      <div class="flex items-center justify-between gap-1 mb-1">
+        <span class="log-badge log-badge-${type}">
+          <i data-lucide="${iconName}" class="w-3 h-3"></i>
+          <span>${this.escapeHtml(sender)}</span>
+        </span>
+        <span class="log-timestamp">${timeStr}</span>
+      </div>
+      <p class="log-preview">${this.escapeHtml(preview)}</p>
+    `;
+
+    // Click to scroll to message in the main chat
+    entryCard.addEventListener("click", () => {
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetEl.classList.remove("highlight-pulse");
+        void targetEl.offsetWidth;
+        targetEl.classList.add("highlight-pulse");
+        setTimeout(() => targetEl.classList.remove("highlight-pulse"), 1300);
+      }
+    });
+
+    this.logItemsContainer.appendChild(entryCard);
+    if (window.lucide) lucide.createIcons();
+
+    // Auto-scroll log container to bottom
+    if (this.exchangeLogContainer) {
+      this.exchangeLogContainer.scrollTop = this.exchangeLogContainer.scrollHeight;
+    }
+  }
+
+  clearLog() {
+    this.logCount = 0;
+    if (this.logCounter) this.logCounter.textContent = "0";
+    if (this.logItemsContainer) this.logItemsContainer.innerHTML = "";
+    if (this.logEmptyState) this.logEmptyState.classList.remove("hidden");
   }
 
   escapeHtml(unsafe) {

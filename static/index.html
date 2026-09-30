@@ -45,7 +45,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=6">
+  <link rel="stylesheet" href="/static/css/style.css?v=7">
 </head>
 
 <body class="bg-[#f5f7fa] text-slate-800 flex h-screen w-screen overflow-hidden">
@@ -55,7 +55,7 @@
 
   <!-- Sidebar -->
   <aside id="sidebar"
-    class="fixed md:static inset-y-0 left-0 z-30 w-72 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0 shadow-sm">
+    class="fixed md:static inset-y-0 left-0 z-30 w-72 md:w-80 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0 shadow-sm">
     <!-- Brand Header -->
     <div class="p-4 border-b border-slate-200 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
@@ -88,11 +88,24 @@
       </button>
     </div>
 
-    <!-- Chat History List -->
-    <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="chat-history-list">
-      <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">Conversations</div>
-      <div id="history-items" class="space-y-1">
-        <!-- History items dynamically populated -->
+    <!-- Exchange Audit Log (Recycled Drawer) -->
+    <div class="flex-1 flex flex-col min-h-0 border-t border-slate-100">
+      <div class="px-3.5 py-2.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <i data-lucide="scroll-text" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span id="log-header-title" class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Log des Échanges</span>
+        </div>
+        <span id="log-counter" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600 font-bold">0</span>
+      </div>
+
+      <!-- Scrollable log container -->
+      <div id="exchange-log-container" class="flex-1 overflow-y-auto p-2.5 space-y-2">
+        <div id="log-empty-state" class="text-center py-10 text-slate-400 text-xs px-2">
+          <i data-lucide="file-clock" class="w-7 h-7 mx-auto mb-2 text-slate-300"></i>
+          <p class="font-medium text-slate-600">Aucun échange consigné</p>
+          <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Les messages de l'Utilisateur, de nOObi et du Kernel apparaîtront ici.</p>
+        </div>
+        <div id="log-items" class="space-y-2"></div>
       </div>
     </div>
 
@@ -279,8 +292,8 @@
   </main>
 
   <!-- App Javascript -->
-  <script src="/static/js/ui.js?v=6"></script>
-  <script src="/static/js/app.js?v=6"></script>
+  <script src="/static/js/ui.js?v=7"></script>
+  <script src="/static/js/app.js?v=7"></script>
 </body>
 
 </html>
