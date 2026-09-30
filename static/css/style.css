@@ -634,3 +634,41 @@ body.glitch-mode #attach-image-btn {
 body.glitch-mode #attach-image-btn:hover {
   background: #330000 !important;
 }
+
+body.glitch-mode #open-webcam-btn {
+  color: #ff3333 !important;
+}
+body.glitch-mode #open-webcam-btn:hover {
+  background: #330000 !important;
+}
+
+/* ========================================================= */
+/* LIVE WEBCAM & CAMERA SCANNER MODAL                        */
+/* ========================================================= */
+
+.camera-hud-overlay {
+  background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.camera-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212, 7, 123, 0.8), #ffffff, rgba(212, 7, 123, 0.8), transparent);
+  box-shadow: 0 0 12px rgba(212, 7, 123, 0.85);
+  animation: scanLaser 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes scanLaser {
+  0% { top: 6%; }
+  100% { top: 94%; }
+}
+
+body.glitch-mode #camera-modal .camera-scan-line {
+  background: linear-gradient(90deg, transparent, #ff1a1a, #ffffff, #ff1a1a, transparent) !important;
+  box-shadow: 0 0 16px #ff0000 !important;
+  animation: scanLaser 0.6s steps(6) infinite !important;
+}
+

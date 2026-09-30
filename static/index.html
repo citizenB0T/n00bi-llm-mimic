@@ -290,11 +290,18 @@
           <!-- Hidden File Input for mobile (camera or gallery) and desktop file picker -->
           <input type="file" id="image-upload-input" accept="image/*" class="hidden">
 
-          <!-- Upload Photo Button -->
+          <!-- Live Webcam / Camera Direct Button -->
+          <button type="button" id="open-webcam-btn"
+            class="w-10 h-10 rounded-xl text-slate-500 hover:text-[#d4077b] hover:bg-pink-50 flex items-center justify-center transition-colors shrink-0"
+            title="Prendre une photo en direct (Webcam / Caméra)">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+          </button>
+
+          <!-- Upload Photo File Button -->
           <button type="button" id="attach-image-btn"
             class="w-10 h-10 rounded-xl text-slate-500 hover:text-[#d4077b] hover:bg-pink-50 flex items-center justify-center transition-colors shrink-0"
-            title="Envoyer une photo (Appareil photo / Galerie)">
-            <i data-lucide="camera" class="w-4 h-4"></i>
+            title="Importer une image ou photo (Galerie / Fichier)">
+            <i data-lucide="image" class="w-4 h-4"></i>
           </button>
 
           <label for="prompt-input" class="sr-only">Votre message</label>
@@ -319,9 +326,112 @@
     </div>
   </main>
 
+  <!-- Live Webcam / Camera Scanner Modal -->
+  <div id="camera-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      <!-- Modal Header -->
+      <div class="px-5 py-3.5 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-rose-500/20 text-[#d4077b] flex items-center justify-center border border-rose-500/30">
+            <i data-lucide="video" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-white tracking-wide uppercase font-mono">Scanner Optique nOObi</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>DIRECT</span>
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">Flux vidéo en temps réel pour analyse multimodale</p>
+          </div>
+        </div>
+
+        <button type="button" id="close-camera-btn"
+          class="w-8 h-8 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors"
+          title="Fermer (Échap)">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Video Feed Area with Scanner HUD -->
+      <div class="relative aspect-4/3 w-full bg-black flex items-center justify-center overflow-hidden">
+        <!-- Live Video Element -->
+        <video id="webcam-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+
+        <!-- Scanning Laser / Reticle Overlay -->
+        <div class="camera-hud-overlay pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
+          <!-- Corner brackets -->
+          <div class="flex justify-between">
+            <div class="w-6 h-6 border-t-2 border-l-2 border-[#d4077b]/80 rounded-tl-lg"></div>
+            <div class="w-6 h-6 border-t-2 border-r-2 border-[#d4077b]/80 rounded-tr-lg"></div>
+          </div>
+
+          <!-- Target Reticle & Scan Line -->
+          <div class="relative flex-1 flex items-center justify-center">
+            <div class="camera-scan-line"></div>
+            <div class="w-24 h-24 border border-white/20 rounded-full flex items-center justify-center">
+              <div class="w-2 h-2 rounded-full bg-[#d4077b] shadow-[0_0_8px_#d4077b]"></div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-end">
+            <div class="w-6 h-6 border-b-2 border-l-2 border-[#d4077b]/80 rounded-bl-lg"></div>
+            <div class="font-mono text-[10px] text-slate-400 bg-black/60 px-2 py-0.5 rounded backdrop-blur border border-white/10">
+              <span id="camera-resolution-label">Initialisation...</span>
+            </div>
+            <div class="w-6 h-6 border-b-2 border-r-2 border-[#d4077b]/80 rounded-br-lg"></div>
+          </div>
+        </div>
+
+        <!-- Camera Error Notice (if permission denied or not supported) -->
+        <div id="camera-error-container" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-10 space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <i data-lucide="video-off" class="w-6 h-6"></i>
+          </div>
+          <h4 class="text-sm font-bold text-white">Accès à la caméra refusé ou indisponible</h4>
+          <p id="camera-error-msg" class="text-xs text-slate-400 max-w-sm leading-relaxed">
+            Veuillez autoriser l'accès à la webcam dans les paramètres de votre navigateur pour utiliser le scanner direct.
+          </p>
+          <button type="button" id="camera-fallback-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-2">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Importer une photo à la place</span>
+          </button>
+        </div>
+
+        <!-- Hidden canvas for taking snapshot -->
+        <canvas id="webcam-canvas" class="hidden"></canvas>
+      </div>
+
+      <!-- Controls Footer -->
+      <div class="px-5 py-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between gap-3">
+        <!-- Switch Camera Button (Mobile front/back) -->
+        <button type="button" id="switch-camera-btn"
+          class="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-2 border border-slate-700/60 transition-colors"
+          title="Changer de caméra (avant/arrière)">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Changer d'objectif</span>
+        </button>
+
+        <!-- Shutter / Capture Button -->
+        <button type="button" id="capture-photo-btn"
+          class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#d4077b] hover:bg-[#b8066b] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-pink-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Capturer</span>
+        </button>
+
+        <!-- Cancel button -->
+        <button type="button" id="cancel-camera-btn"
+          class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white text-xs transition-colors cursor-pointer">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- App Javascript -->
-  <script src="/static/js/ui.js?v=8"></script>
-  <script src="/static/js/app.js?v=8"></script>
+  <script src="/static/js/ui.js?v=9"></script>
+  <script src="/static/js/app.js?v=9"></script>
 </body>
 
 </html>

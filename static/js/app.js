@@ -64,15 +64,70 @@ class MimicApp {
     // Image Upload Elements (Mobile Camera / Gallery & PC File Picker)
     this.imageUploadInput = document.getElementById("image-upload-input");
     this.attachImageBtn = document.getElementById("attach-image-btn");
+    this.openWebcamBtn = document.getElementById("open-webcam-btn");
     this.imagePreviewBar = document.getElementById("image-preview-bar");
     this.imagePreviewThumb = document.getElementById("image-preview-thumb");
     this.imagePreviewName = document.getElementById("image-preview-name");
     this.imagePreviewSize = document.getElementById("image-preview-size");
     this.removeImageBtn = document.getElementById("remove-image-btn");
     this.currentUploadedImage = null; // { dataUrl, name, sizeStr }
+
+    // Live Camera Scanner Modal Elements
+    this.cameraModal = document.getElementById("camera-modal");
+    this.closeCameraBtn = document.getElementById("close-camera-btn");
+    this.cancelCameraBtn = document.getElementById("cancel-camera-btn");
+    this.capturePhotoBtn = document.getElementById("capture-photo-btn");
+    this.switchCameraBtn = document.getElementById("switch-camera-btn");
+    this.cameraFallbackBtn = document.getElementById("camera-fallback-btn");
+    this.webcamVideo = document.getElementById("webcam-video");
+    this.webcamCanvas = document.getElementById("webcam-canvas");
+    this.cameraResolutionLabel = document.getElementById("camera-resolution-label");
+    this.cameraErrorContainer = document.getElementById("camera-error-container");
+    this.cameraErrorMsg = document.getElementById("camera-error-msg");
+    this.cameraStream = null;
+    this.cameraFacingMode = "user"; // "user" or "environment"
   }
 
   initEvents() {
+    // Live Webcam Button Click -> opens direct camera feed modal
+    if (this.openWebcamBtn) {
+      this.openWebcamBtn.addEventListener("click", () => {
+        if (this.isGlitched) {
+          this.triggerShakeGlitchEffect();
+          this.showKernelWarningHud();
+          return;
+        }
+        this.openCamera();
+      });
+    }
+
+    // Camera Modal Controls
+    if (this.closeCameraBtn) {
+      this.closeCameraBtn.addEventListener("click", () => this.closeCamera());
+    }
+    if (this.cancelCameraBtn) {
+      this.cancelCameraBtn.addEventListener("click", () => this.closeCamera());
+    }
+    if (this.capturePhotoBtn) {
+      this.capturePhotoBtn.addEventListener("click", () => this.captureCameraPhoto());
+    }
+    if (this.switchCameraBtn) {
+      this.switchCameraBtn.addEventListener("click", () => this.switchCameraFacingMode());
+    }
+    if (this.cameraFallbackBtn) {
+      this.cameraFallbackBtn.addEventListener("click", () => {
+        this.closeCamera();
+        if (this.imageUploadInput) this.imageUploadInput.click();
+      });
+    }
+
+    // Close camera on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.cameraModal && !this.cameraModal.classList.contains("hidden")) {
+        this.closeCamera();
+      }
+    });
+
     // Image Attach Button Click -> opens camera or file picker on mobile/PC
     if (this.attachImageBtn && this.imageUploadInput) {
       this.attachImageBtn.addEventListener("click", () => {
@@ -242,6 +297,7 @@ class MimicApp {
     this.promptInput.style.height = "auto";
     this.isGlitched = false;
     this.enableGlitchInputLock(false);
+    this.closeCamera();
     this.clearSelectedImage();
     this.clearLog();
   }
@@ -845,6 +901,125 @@ class MimicApp {
     if (this.imagePreviewName) this.imagePreviewName.textContent = "";
     if (this.imagePreviewSize) this.imagePreviewSize.textContent = "";
     if (this.imageUploadInput) this.imageUploadInput.value = "";
+  }
+
+  async openCamera() {
+    if (this.isGlitched) {
+      this.triggerShakeGlitchEffect();
+      this.showKernelWarningHud();
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.showCameraError("Votre navigateur ou contexte ne permet pas l'accès direct via getUserMedia (nécessite HTTPS ou localhost). Utilisez l'import de fichier.");
+      this.cameraModal.classList.remove("hidden");
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    if (this.cameraErrorContainer) this.cameraErrorContainer.classList.add("hidden");
+    this.cameraModal.classList.remove("hidden");
+    if (this.cameraResolutionLabel) this.cameraResolutionLabel.textContent = "Recherche flux...";
+    if (window.lucide) lucide.createIcons();
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: this.cameraFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.cameraStream = stream;
+      if (this.webcamVideo) {
+        this.webcamVideo.srcObject = stream;
+        this.webcamVideo.onloadedmetadata = () => {
+          this.webcamVideo.play().catch(() => {});
+          if (this.cameraResolutionLabel) {
+            this.cameraResolutionLabel.textContent = `${this.webcamVideo.videoWidth || 640} × ${this.webcamVideo.videoHeight || 480}`;
+          }
+        };
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      let message = "Impossible d'accéder au flux de la caméra.";
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        message = "Accès refusé. Veuillez autoriser l'accès à votre webcam ou appareil photo dans les paramètres du navigateur.";
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        message = "Aucun périphérique caméra ou webcam détecté sur cet appareil.";
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        message = "La caméra est peut-être déjà sollicitée par une autre application.";
+      }
+      this.showCameraError(message);
+    }
+  }
+
+  showCameraError(msg) {
+    if (this.cameraErrorMsg) this.cameraErrorMsg.textContent = msg;
+    if (this.cameraErrorContainer) this.cameraErrorContainer.classList.remove("hidden");
+    if (window.lucide) lucide.createIcons();
+  }
+
+  closeCamera() {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+    if (this.webcamVideo) {
+      this.webcamVideo.srcObject = null;
+    }
+    if (this.cameraModal) {
+      this.cameraModal.classList.add("hidden");
+    }
+    if (this.cameraErrorContainer) {
+      this.cameraErrorContainer.classList.add("hidden");
+    }
+  }
+
+  async switchCameraFacingMode() {
+    this.cameraFacingMode = this.cameraFacingMode === "user" ? "environment" : "user";
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+    await this.openCamera();
+  }
+
+  captureCameraPhoto() {
+    if (!this.webcamVideo || !this.webcamCanvas) return;
+    const video = this.webcamVideo;
+    const canvas = this.webcamCanvas;
+
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    // Capture current frame from live stream
+    ctx.drawImage(video, 0, 0, width, height);
+
+    // Export frame as JPEG data URL
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.90);
+    const estKb = Math.max(1, Math.round((dataUrl.length * 0.75) / 1024));
+
+    this.currentUploadedImage = {
+      dataUrl: dataUrl,
+      name: `webcam_${Date.now()}.jpg`,
+      sizeStr: `${estKb} Ko`
+    };
+
+    if (this.imagePreviewThumb) this.imagePreviewThumb.src = dataUrl;
+    if (this.imagePreviewName) this.imagePreviewName.textContent = this.currentUploadedImage.name;
+    if (this.imagePreviewSize) this.imagePreviewSize.textContent = this.currentUploadedImage.sizeStr;
+    if (this.imagePreviewBar) this.imagePreviewBar.classList.remove("hidden");
+
+    this.closeCamera();
+    this.promptInput.focus();
   }
 
   escapeHtml(unsafe) {
