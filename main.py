@@ -41,6 +41,7 @@ CUMULATIVE_STATS = {
 class ChatMessage(BaseModel):
     role: str
     content: str
+    image: Optional[str] = None
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
@@ -48,6 +49,7 @@ class ChatRequest(BaseModel):
     speed: Optional[float] = 1.0
     scenario_id: Optional[str] = None
     session_id: Optional[str] = None
+    image: Optional[str] = None
 
 class ScenarioStartRequest(BaseModel):
     scenario_id: str
@@ -96,14 +98,16 @@ async def get_stats():
 
 @app.post("/api/chat")
 async def chat_endpoint(payload: ChatRequest):
-    user_prompt = payload.messages[-1].content if payload.messages else "Hello"
+    last_msg = payload.messages[-1] if payload.messages else None
+    user_prompt = last_msg.content if last_msg else ""
+    image_data = payload.image or (last_msg.image if last_msg else None)
     speed = payload.speed or 1.0
     scenario_id = payload.scenario_id
     session_id = payload.session_id or "default_session"
 
-    # Unified flow: All messages go through scenario_manager (with hybrid technical response support)
+    # Unified flow: All messages go through scenario_manager (with hybrid technical and multimodal vision support)
     scen_id = scenario_id if (scenario_id and scenario_id not in ("none", "free_mode")) else "evaluation_turing"
-    bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id)
+    bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id, image_data=image_data)
 
     CUMULATIVE_STATS["requests_served"] += 1
 

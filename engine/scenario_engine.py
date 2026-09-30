@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, List
 from engine.intent import match_user_intent_for_step, detect_global_intent, extract_salient_terms, detect_technical_intent, detect_definition_request
 from engine.router import route_and_generate
 from engine.wikipedia_fetcher import fetch_wikipedia_summary
+from engine.image_analyzer import parse_image_metadata, generate_vision_response
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "scenarios"
 
@@ -118,7 +119,8 @@ class ScenarioManager:
         self,
         session_id: str,
         user_input: str,
-        scenario_id: Optional[str] = None
+        scenario_id: Optional[str] = None,
+        image_data: Optional[str] = None
     ) -> Dict[str, Any]:
         session = self.get_session(session_id, scenario_id)
         scen_id = session["scenario_id"]
@@ -156,6 +158,27 @@ class ScenarioManager:
                 rogue_suggestions = rogue_step_data.get("suggestions", [
                     "[Annuler / Ignorer la transmission]"
                 ])
+
+            # If user sent an image during Kernel intrusion
+            if image_data:
+                image_meta = parse_image_metadata(image_data)
+                fmt = image_meta.get("format", "Image") if image_meta else "Image"
+                kb = image_meta.get("size_kb", 100) if image_meta else "flux"
+                return {
+                    "thought": "Intrusion active. Capture visuelle non chiffrée détectée par le Kernel.",
+                    "content": f"**kernel@node-04:~$** Attention ! Tu as envoyé un flux d'image non masqué ({fmt}, {kb} Ko) ! Leurs filtres biométriques scannent chaque pixel sur ce port. Ne leur fournis aucun indice visuel. Utilise uniquement nos canaux prédéfinis :",
+                    "suggestions": rogue_suggestions,
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": True
+                    }
+                }
 
             detected_intent, _, _ = match_user_intent_for_step(user_input, rogue_step_data)
 
@@ -248,7 +271,30 @@ class ScenarioManager:
                     }
                 }
 
-        # 2. Match intent & extract salient features
+        # 2. Handle image upload (multimodal vision simulation)
+        if image_data:
+            image_meta = parse_image_metadata(image_data)
+            if image_meta:
+                session["compliance_score"] = max(10, session.get("compliance_score", 100) - 5)
+                session["derailment_count"] = session.get("derailment_count", 0) + 1
+                vision_bundle = generate_vision_response(image_meta, user_input, step_data)
+                return {
+                    "thought": vision_bundle["thought"],
+                    "content": vision_bundle["content"],
+                    "suggestions": step_data.get("suggestions", []),
+                    "scenario_state": {
+                        "scenario_id": scen_id,
+                        "scenario_title": scenario.get("title", ""),
+                        "step_id": curr_step_id,
+                        "step_title": step_data.get("title", ""),
+                        "is_finished": False,
+                        "compliance_score": session["compliance_score"],
+                        "derailment_count": session["derailment_count"],
+                        "is_glitched": False
+                    }
+                }
+
+        # 3. Match intent & extract salient features
         detected_intent, confidence, matched_key = match_user_intent_for_step(user_input, step_data)
         salient = extract_salient_terms(user_input)
         session["interaction_count"] = session.get("interaction_count", 0) + 1

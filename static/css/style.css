@@ -576,3 +576,61 @@ body.glitch-mode .log-entry-kernel:hover {
   border-color: #22c55e !important;
   box-shadow: 0 0 14px rgba(34, 197, 94, 0.4) !important;
 }
+
+/* ========================================================= */
+/* IMAGE UPLOAD & MULTIMODAL PREVIEW STYLES                  */
+/* ========================================================= */
+
+#image-preview-bar {
+  animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-form-dragover {
+  border-color: var(--voo-pink) !important;
+  background-color: #fdf2f8 !important;
+  box-shadow: 0 0 0 3px rgba(212, 7, 123, 0.2) !important;
+}
+
+.user-attached-image {
+  border-radius: 12px;
+  max-height: 18rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.user-attached-image:hover {
+  transform: scale(1.015);
+}
+
+body.glitch-mode #image-preview-bar {
+  background-color: #0b0404 !important;
+  border-color: #7f1d1d !important;
+}
+
+body.glitch-mode #image-preview-name {
+  color: #f87171 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+body.glitch-mode #attach-image-btn {
+  color: #ff3333 !important;
+}
+body.glitch-mode #attach-image-btn:hover {
+  background: #330000 !important;
+}

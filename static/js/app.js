@@ -60,9 +60,86 @@ class MimicApp {
     this.logCounter = document.getElementById("log-counter");
     this.logHeaderTitle = document.getElementById("log-header-title");
     this.logCount = 0;
+
+    // Image Upload Elements (Mobile Camera / Gallery & PC File Picker)
+    this.imageUploadInput = document.getElementById("image-upload-input");
+    this.attachImageBtn = document.getElementById("attach-image-btn");
+    this.imagePreviewBar = document.getElementById("image-preview-bar");
+    this.imagePreviewThumb = document.getElementById("image-preview-thumb");
+    this.imagePreviewName = document.getElementById("image-preview-name");
+    this.imagePreviewSize = document.getElementById("image-preview-size");
+    this.removeImageBtn = document.getElementById("remove-image-btn");
+    this.currentUploadedImage = null; // { dataUrl, name, sizeStr }
   }
 
   initEvents() {
+    // Image Attach Button Click -> opens camera or file picker on mobile/PC
+    if (this.attachImageBtn && this.imageUploadInput) {
+      this.attachImageBtn.addEventListener("click", () => {
+        if (this.isGlitched) {
+          this.triggerShakeGlitchEffect();
+          this.showKernelWarningHud();
+          return;
+        }
+        this.imageUploadInput.click();
+      });
+
+      this.imageUploadInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          this.processImageFile(file);
+        }
+        this.imageUploadInput.value = "";
+      });
+    }
+
+    // Remove selected image
+    if (this.removeImageBtn) {
+      this.removeImageBtn.addEventListener("click", () => {
+        this.clearSelectedImage();
+      });
+    }
+
+    // Drag & Drop image files onto the chat form
+    ["dragenter", "dragover"].forEach(eventName => {
+      this.chatForm.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.chatForm.classList.add("chat-form-dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      this.chatForm.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.chatForm.classList.remove("chat-form-dragover");
+      });
+    });
+
+    this.chatForm.addEventListener("drop", (e) => {
+      const files = e.dataTransfer ? e.dataTransfer.files : null;
+      if (files && files.length > 0 && files[0].type.startsWith("image/")) {
+        this.processImageFile(files[0]);
+      }
+    });
+
+    // Paste image from clipboard (e.g. print screen / mobile copy)
+    this.promptInput.addEventListener("paste", (e) => {
+      const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+      if (items) {
+        for (const item of items) {
+          if (item.type && item.type.startsWith("image/")) {
+            const blob = item.getAsFile();
+            if (blob) {
+              this.processImageFile(blob);
+              break;
+            }
+          }
+        }
+      }
+    });
+
     // Intercept click on locked chat form during glitch
     this.chatForm.addEventListener("click", (e) => {
       if (this.isGlitched && !e.target.closest("button.kernel-cmd-btn")) {
@@ -165,6 +242,7 @@ class MimicApp {
     this.promptInput.style.height = "auto";
     this.isGlitched = false;
     this.enableGlitchInputLock(false);
+    this.clearSelectedImage();
     this.clearLog();
   }
 
@@ -194,8 +272,11 @@ class MimicApp {
   }
 
   async handleSubmit(forcedText = null) {
-    const text = (forcedText !== null ? forcedText : this.promptInput.value).trim();
-    if (!text) return;
+    const rawText = (forcedText !== null ? forcedText : this.promptInput.value).trim();
+    const hasImage = !!this.currentUploadedImage;
+
+    // Check if user has provided either text or image
+    if (!rawText && !hasImage) return;
 
     if (this.isGlitched && forcedText === null) {
       this.triggerShakeGlitchEffect();
@@ -210,6 +291,10 @@ class MimicApp {
       return;
     }
 
+    // Capture attached image before clearing preview
+    const attachedImageDataUrl = this.currentUploadedImage ? this.currentUploadedImage.dataUrl : null;
+    this.clearSelectedImage();
+
     // Hide welcome hero
     this.welcomeHero.classList.add("hidden");
 
@@ -219,15 +304,24 @@ class MimicApp {
       this.promptInput.style.height = "auto";
     }
 
-    // Add user message
-    this.appendUserMessage(text);
-    this.messages.push({ role: "user", content: text });
+    // Default text if only photo was uploaded without message
+    const displayText = rawText || (attachedImageDataUrl ? "Voici une photo." : "");
+
+    // Add user message to UI and history
+    this.appendUserMessage(displayText, attachedImageDataUrl);
+    
+    const userMsgObj = { role: "user", content: displayText };
+    if (attachedImageDataUrl) {
+      userMsgObj.image = attachedImageDataUrl;
+    }
+    this.messages.push(userMsgObj);
 
     // Stream response
     await this.streamAssistantResponse({
       endpoint: "/api/chat",
       payload: {
         messages: this.messages,
+        image: attachedImageDataUrl,
         speed: parseFloat(this.speedSelect.value) || 1.0,
         scenario_id: this.activeScenario,
         session_id: this.sessionId
@@ -235,23 +329,35 @@ class MimicApp {
     });
   }
 
-  appendUserMessage(text) {
+  appendUserMessage(text, imageDataUrl = null) {
     const messageId = `msg-user-${Date.now()}`;
     const msgDiv = document.createElement("div");
     msgDiv.id = messageId;
     msgDiv.className = "flex justify-end";
+
+    const imageHtml = imageDataUrl ? `
+      <div class="mb-2 rounded-xl overflow-hidden max-w-xs shadow-inner border border-slate-700/60 bg-black/40">
+        <img src="${imageDataUrl}" alt="Photo envoyée" class="user-attached-image w-full max-h-64 object-cover cursor-pointer hover:opacity-95 transition-opacity" onclick="window.open(this.src, '_blank')"/>
+      </div>
+    ` : "";
+
+    const textHtml = text ? `<p class="whitespace-pre-wrap leading-relaxed">${this.escapeHtml(text)}</p>` : "";
+
     msgDiv.innerHTML = `
       <div class="max-w-[85%] rounded-2xl bg-slate-900 text-white px-5 py-3 text-sm shadow-sm transition-all duration-300">
-        <p class="whitespace-pre-wrap leading-relaxed">${this.escapeHtml(text)}</p>
+        ${imageHtml}
+        ${textHtml}
       </div>
     `;
     this.messagesList.appendChild(msgDiv);
     this.scrollToBottom();
 
+    const logText = (imageDataUrl ? "📷 [Photo] " : "") + (text || "Photo envoyée");
+
     this.addLogEntry({
       type: "user",
       sender: "Utilisateur",
-      text: text,
+      text: logText,
       targetId: messageId
     });
   }
@@ -699,11 +805,46 @@ class MimicApp {
     }
   }
 
-  clearLog() {
-    this.logCount = 0;
-    if (this.logCounter) this.logCounter.textContent = "0";
-    if (this.logItemsContainer) this.logItemsContainer.innerHTML = "";
-    if (this.logEmptyState) this.logEmptyState.classList.remove("hidden");
+  processImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      return;
+    }
+
+    // Limit to 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      alert("L'image est trop volumineuse (max 10 Mo).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      const sizeStr = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+        : `${Math.round(file.size / 1024)} Ko`;
+
+      this.currentUploadedImage = {
+        dataUrl: dataUrl,
+        name: file.name || "photo.jpg",
+        sizeStr: sizeStr
+      };
+
+      if (this.imagePreviewThumb) this.imagePreviewThumb.src = dataUrl;
+      if (this.imagePreviewName) this.imagePreviewName.textContent = file.name || "Photo";
+      if (this.imagePreviewSize) this.imagePreviewSize.textContent = sizeStr;
+      if (this.imagePreviewBar) this.imagePreviewBar.classList.remove("hidden");
+      this.promptInput.focus();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearSelectedImage() {
+    this.currentUploadedImage = null;
+    if (this.imagePreviewBar) this.imagePreviewBar.classList.add("hidden");
+    if (this.imagePreviewThumb) this.imagePreviewThumb.src = "";
+    if (this.imagePreviewName) this.imagePreviewName.textContent = "";
+    if (this.imagePreviewSize) this.imagePreviewSize.textContent = "";
+    if (this.imageUploadInput) this.imageUploadInput.value = "";
   }
 
   escapeHtml(unsafe) {

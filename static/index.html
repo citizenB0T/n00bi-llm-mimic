@@ -45,7 +45,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=7">
+  <link rel="stylesheet" href="/static/css/style.css?v=8">
 </head>
 
 <body class="bg-[#f5f7fa] text-slate-800 flex h-screen w-screen overflow-hidden">
@@ -267,10 +267,38 @@
           </div>
         </div>
 
+        <!-- Image Preview Bar (Appears when image is selected via mobile or PC) -->
+        <div id="image-preview-bar" class="hidden mb-2 p-2 bg-white border border-slate-200 rounded-2xl flex items-center gap-3 shadow-xs">
+          <div class="relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-100 flex items-center justify-center">
+            <img id="image-preview-thumb" src="" alt="Aperçu" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="image" class="w-3.5 h-3.5 text-[#d4077b]"></i>
+              <p id="image-preview-name" class="text-xs font-semibold text-slate-800 truncate">photo.jpg</p>
+            </div>
+            <p id="image-preview-size" class="text-[10px] text-slate-400 font-mono mt-0.5">120 KB</p>
+          </div>
+          <button type="button" id="remove-image-btn" class="w-8 h-8 rounded-full text-slate-400 hover:text-rose-500 hover:bg-slate-100 flex items-center justify-center transition-colors shrink-0" title="Retirer l'image">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
         <form id="chat-form"
           class="relative flex items-end rounded-2xl bg-[#f8fafc] border border-slate-300 focus-within:border-[#d4077b] focus-within:ring-2 focus-within:ring-pink-100 transition-all p-2 shadow-sm">
+          
+          <!-- Hidden File Input for mobile (camera or gallery) and desktop file picker -->
+          <input type="file" id="image-upload-input" accept="image/*" class="hidden">
+
+          <!-- Upload Photo Button -->
+          <button type="button" id="attach-image-btn"
+            class="w-10 h-10 rounded-xl text-slate-500 hover:text-[#d4077b] hover:bg-pink-50 flex items-center justify-center transition-colors shrink-0"
+            title="Envoyer une photo (Appareil photo / Galerie)">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+          </button>
+
           <label for="prompt-input" class="sr-only">Votre message</label>
-          <textarea id="prompt-input" rows="1" placeholder="Posez une question ou répondez à nOObi..."
+          <textarea id="prompt-input" rows="1" placeholder="Posez une question, répondez, ou glissez une photo..."
             class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none max-h-48 overflow-y-auto leading-relaxed"></textarea>
 
           <div class="flex items-center gap-2 pl-2">
@@ -284,7 +312,7 @@
         </form>
 
         <div class="flex items-center justify-between px-2 text-[11px] text-slate-500">
-          <span>nOObi simule le streaming de tokens et les arbres d'intentions sans aucun GPU.</span>
+          <span>nOObi simule la vision par ordinateur et les arbres d'intentions sans aucun GPU.</span>
           <span class="font-mono text-slate-400">Entrée pour envoyer • Shift+Entrée pour saut de ligne</span>
         </div>
       </div>
@@ -292,8 +320,8 @@
   </main>
 
   <!-- App Javascript -->
-  <script src="/static/js/ui.js?v=7"></script>
-  <script src="/static/js/app.js?v=7"></script>
+  <script src="/static/js/ui.js?v=8"></script>
+  <script src="/static/js/app.js?v=8"></script>
 </body>
 
 </html>

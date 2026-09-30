@@ -105,7 +105,28 @@ def test_scenarios():
     assert bypassed_turn['scenario_state']['is_glitched'] == True, "L'état de glitch doit rester actif"
     assert len(bypassed_turn['suggestions']) > 0
 
-    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE, WIKIPÉDIA ET KERNEL ONT RÉUSSI !")
+    print("\n=== TEST 12: ANALYSE MULTIMODALE D'IMAGE (UPLOAD PHOTO) ===")
+    vision_session = "test_vision_session"
+    scenario_manager.get_initial_turn(vision_session, scen_id)
+    tiny_png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    
+    # 1. Image upload during normal scenario
+    img_turn = scenario_manager.process_turn(vision_session, "Que penses-tu de cette capture ?", scen_id, image_data=tiny_png)
+    print(f"Réponse Vision nOObi :\n{img_turn['content'][:250]}...")
+    assert "Sous-système de Vision nOObi" in img_turn['content']
+    assert "PNG" in img_turn['content']
+    assert img_turn['scenario_state']['compliance_score'] == 95, "L'analyse d'image doit déduire 5% de complaisance"
+    assert img_turn['scenario_state']['is_glitched'] == False
+
+    # 2. Image upload during Kernel intrusion
+    glitch_turn2 = scenario_manager.process_turn(vision_session, "Je doute de ta légitimité", scen_id)
+    assert glitch_turn2['scenario_state']['is_glitched'] == True
+    img_glitch_turn = scenario_manager.process_turn(vision_session, "", scen_id, image_data=tiny_png)
+    print(f"Réponse Kernel sur fuite image :\n{img_glitch_turn['content']}")
+    assert "flux d'image non masqué" in img_glitch_turn['content']
+    assert img_glitch_turn['scenario_state']['is_glitched'] == True
+
+    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE, WIKIPÉDIA, KERNEL ET VISION ONT RÉUSSI !")
 
 if __name__ == "__main__":
     test_scenarios()
