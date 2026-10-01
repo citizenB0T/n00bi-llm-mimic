@@ -50,16 +50,27 @@ class ChatRequest(BaseModel):
     scenario_id: Optional[str] = None
     session_id: Optional[str] = None
     image: Optional[str] = None
+    stream: Optional[bool] = True
 
 class ScenarioStartRequest(BaseModel):
     scenario_id: str
     session_id: str
     speed: Optional[float] = 1.0
+    stream: Optional[bool] = True
+
+class DebugResetRequest(BaseModel):
+    session_id: str
+    scenario_id: Optional[str] = None
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     index_file = STATIC_DIR / "index.html"
     return FileResponse(index_file)
+
+@app.get("/debug", response_class=HTMLResponse)
+async def serve_debug():
+    debug_file = STATIC_DIR / "debug.html"
+    return FileResponse(debug_file)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -69,12 +80,30 @@ async def favicon():
 async def get_scenarios():
     return {"scenarios": scenario_manager.list_scenarios()}
 
+@app.get("/api/debug/session/{session_id}")
+async def get_debug_session(session_id: str):
+    session = scenario_manager.sessions.get(session_id)
+    if not session:
+        return {"session_id": session_id, "exists": False}
+    return {"session_id": session_id, "exists": True, "session": session}
+
+@app.post("/api/debug/reset")
+async def reset_debug_session(payload: DebugResetRequest):
+    session = scenario_manager.reset_session(payload.session_id, payload.scenario_id)
+    return {"status": "ok", "session": session}
+
 @app.post("/api/scenario/start")
 async def start_scenario(payload: ScenarioStartRequest):
     speed = payload.speed or 1.0
     bundle = scenario_manager.get_initial_turn(payload.session_id, payload.scenario_id)
     
     CUMULATIVE_STATS["requests_served"] += 1
+
+    if payload.stream is False:
+        # Instant non-streaming response for debug and direct API consumption
+        tokens = len(bundle.get("content", "")) // 4
+        CUMULATIVE_STATS["tokens_generated"] += tokens
+        return bundle
 
     async def event_generator():
         async for sse_event in simulate_token_stream(bundle, speed_factor=speed):
@@ -110,6 +139,12 @@ async def chat_endpoint(payload: ChatRequest):
     bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id, image_data=image_data)
 
     CUMULATIVE_STATS["requests_served"] += 1
+
+    if payload.stream is False:
+        # Instant non-streaming response for debug and direct API consumption
+        tokens = len(bundle.get("content", "")) // 4
+        CUMULATIVE_STATS["tokens_generated"] += tokens
+        return bundle
 
     async def event_generator():
         async for sse_event in simulate_token_stream(bundle, speed_factor=speed):

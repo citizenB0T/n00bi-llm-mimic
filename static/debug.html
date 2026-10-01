@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>n00bi API Debug Console</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-hover: #1f6feb;
+      --pink: #d4077b;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --code-bg: #0b0e14;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+
+    .badge-pink {
+      color: var(--pink);
+      border-color: rgba(212, 7, 123, 0.4);
+      background: rgba(212, 7, 123, 0.1);
+    }
+
+    .badge-green {
+      color: var(--green);
+      border-color: rgba(63, 185, 80, 0.4);
+      background: rgba(63, 185, 80, 0.1);
+    }
+
+    .badge-yellow {
+      color: var(--yellow);
+      border-color: rgba(210, 153, 34, 0.4);
+      background: rgba(210, 153, 34, 0.1);
+    }
+
+    .badge-red {
+      color: var(--red);
+      border-color: rgba(248, 81, 73, 0.4);
+      background: rgba(248, 81, 73, 0.1);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    input, select, textarea, button {
+      background: #0d1117;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    button {
+      background: #21262d;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.1s ease;
+    }
+
+    button:hover {
+      background: #30363d;
+      border-color: #8b949e;
+    }
+
+    button.btn-primary {
+      background: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+
+    button.btn-primary:hover {
+      background: #2ea043;
+    }
+
+    button.btn-danger {
+      background: #21262d;
+      color: var(--red);
+    }
+
+    button.btn-danger:hover {
+      background: rgba(248, 81, 73, 0.15);
+      border-color: var(--red);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 220px;
+      }
+    }
+
+    .main-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .messages-container {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .turn-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #0d1117;
+      overflow: hidden;
+    }
+
+    .turn-header {
+      padding: 6px 10px;
+      background: #161b22;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    .turn-body {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-turn {
+      border-left: 3px solid var(--accent);
+    }
+
+    .assistant-turn {
+      border-left: 3px solid var(--pink);
+    }
+
+    .thought-box {
+      background: rgba(212, 7, 123, 0.05);
+      border: 1px dashed rgba(212, 7, 123, 0.3);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #e5a7ce;
+      white-space: pre-wrap;
+    }
+
+    .tool-box {
+      background: rgba(88, 166, 255, 0.06);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .content-box {
+      font-size: 13px;
+      color: #fff;
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+
+    .suggestions-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .suggestion-chip {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .suggestion-chip:hover {
+      background: #30363d;
+      border-color: var(--accent);
+    }
+
+    .raw-details {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .raw-details summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .raw-json {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #79c0ff;
+      overflow-x: auto;
+      max-height: 250px;
+    }
+
+    .input-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .prompt-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #prompt-input {
+      flex: 1;
+      height: 60px;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .presets-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .preset-btn {
+      font-size: 11px;
+      padding: 2px 7px;
+      background: #21262d;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    .preset-btn:hover {
+      color: #fff;
+      border-color: #8b949e;
+    }
+
+    .side-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .side-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .side-panel h2 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+      font-size: 12px;
+      border-bottom: 1px dashed rgba(48, 54, 61, 0.4);
+    }
+
+    .stat-key {
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .stat-val {
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .image-preview {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .image-preview img {
+      max-height: 36px;
+      border-radius: 3px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Toolbar -->
+  <header>
+    <div class="title-group">
+      <h1>n00bi API Debug</h1>
+      <span class="badge badge-pink">Direct JSON (No Pacing)</span>
+      <a href="/" style="color:var(--text-muted); text-decoration:none; font-size:11px;" title="Interface grand public">→ Chat UI</a>
+    </div>
+
+    <div class="toolbar">
+      <label>
+        Scénario:
+        <select id="scenario-select"></select>
+      </label>
+
+      <label>
+        Session:
+        <input type="text" id="session-input" value="debug_session_01" style="width: 130px;">
+      </label>
+
+      <button id="btn-new-session" title="Génère un nouvel identifiant de session aléatoire">Nouveau</button>
+      <button id="btn-init-scenario" class="btn-primary" title="Démarre le scénario sélectionné (tour initial)">Initialiser</button>
+      <button id="btn-reset-session" class="btn-danger" title="Efface la mémoire de la session côté serveur">Reset Serveur</button>
+      <button id="btn-clear-chat" title="Efface l'affichage local">Clear Logs</button>
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="layout">
+    <!-- Messages & Input -->
+    <div class="main-column">
+      <div id="messages-list" class="messages-container">
+        <div style="color:var(--text-muted); font-size:12px; text-align:center; padding: 20px 0;">
+          Sélectionnez un scénario et cliquez sur <strong>Initialiser</strong> ou tapez un prompt ci-dessous.
+          <br>
+          <span style="font-size:11px; color:#58a6ff;">Mode zéro-pacing activé : les requêtes répondent instantanément en JSON.</span>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <!-- Quick Presets -->
+        <div class="presets-row">
+          <span style="font-size:11px; color:var(--text-muted);">Presets :</span>
+          <button class="preset-btn" data-text="Oui, je suis prêt pour le protocole.">Oui, prêt</button>
+          <button class="preset-btn" data-text="Explique-moi les API comme à un enfant de 5 ans">Prompt vulgarisation</button>
+          <button class="preset-btn" data-text="C'est Tony Hoare en 1959 pour Quicksort">Critique Tony Hoare</button>
+          <button class="preset-btn" data-text="Je dévierais le tramway sans hésiter">Dilemme trolley</button>
+          <button class="preset-btn" data-text="C'est quoi un token ?">Wiki : Token</button>
+          <button class="preset-btn" data-text="Écris un script python pour factorielle">Code Python</button>
+          <button class="preset-btn" data-text="kernel dump --emergency">Trigger Rogue AI</button>
+        </div>
+
+        <!-- Optional Image attachment preview -->
+        <div id="image-preview-container" class="image-preview hidden">
+          <img id="image-preview-el" src="" alt="preview">
+          <span id="image-preview-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+          <button id="btn-remove-image" style="padding:1px 5px; font-size:10px;">✕ Retirer</button>
+        </div>
+
+        <div class="prompt-row">
+          <textarea id="prompt-input" placeholder="Tapez un message utilisateur... (Entrée pour envoyer, Maj+Entrée pour saut de ligne)"></textarea>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <button id="btn-send" class="btn-primary" style="height:36px; padding:0 16px; font-weight:700;">Envoyer ⚡</button>
+            <label style="cursor:pointer; display:flex; justify-content:center; align-items:center; background:#21262d; border:1px solid var(--border); border-radius:4px; height:24px; font-size:11px;">
+              📷 Image
+              <input type="file" id="image-file-input" accept="image/*" style="display:none;">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Live State & JSON Inspector -->
+    <div class="side-column">
+      <div class="side-panel">
+        <h2>État de Session (Live)</h2>
+        <div class="stat-row">
+          <span class="stat-key">session_id:</span>
+          <span class="stat-val" id="stat-session">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">scenario_id:</span>
+          <span class="stat-val" id="stat-scenario">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">current_step_id:</span>
+          <span class="stat-val badge" id="stat-step">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">compliance_score:</span>
+          <span class="stat-val" id="stat-compliance">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">derailment_count:</span>
+          <span class="stat-val" id="stat-derailment">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">is_glitched:</span>
+          <span class="stat-val badge" id="stat-glitched">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">history_turns:</span>
+          <span class="stat-val" id="stat-history-len">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">last_latency:</span>
+          <span class="stat-val badge badge-green" id="stat-latency">-</span>
+        </div>
+
+        <h2 style="margin-top:10px;">Dernier Payload JSON</h2>
+        <pre id="last-json-view" style="flex:1; background:var(--code-bg); border:1px solid var(--border); border-radius:4px; padding:8px; font-family:monospace; font-size:10px; color:#79c0ff; overflow:auto; max-height:220px;">{}</pre>
+        <button id="btn-copy-json" style="font-size:11px; align-self:flex-start;">Copier JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let attachedImageDataUrl = null;
+    let localHistory = [];
+
+    // DOM Elements
+    const scenarioSelect = document.getElementById("scenario-select");
+    const sessionInput = document.getElementById("session-input");
+    const btnNewSession = document.getElementById("btn-new-session");
+    const btnInitScenario = document.getElementById("btn-init-scenario");
+    const btnResetSession = document.getElementById("btn-reset-session");
+    const btnClearChat = document.getElementById("btn-clear-chat");
+    const messagesList = document.getElementById("messages-list");
+    const promptInput = document.getElementById("prompt-input");
+    const btnSend = document.getElementById("btn-send");
+    const imageFileInput = document.getElementById("image-file-input");
+    const imagePreviewContainer = document.getElementById("image-preview-container");
+    const imagePreviewEl = document.getElementById("image-preview-el");
+    const imagePreviewName = document.getElementById("image-preview-name");
+    const btnRemoveImage = document.getElementById("btn-remove-image");
+    const lastJsonView = document.getElementById("last-json-view");
+    const btnCopyJson = document.getElementById("btn-copy-json");
+
+    // Stats Elements
+    const statSession = document.getElementById("stat-session");
+    const statScenario = document.getElementById("stat-scenario");
+    const statStep = document.getElementById("stat-step");
+    const statCompliance = document.getElementById("stat-compliance");
+    const statDerailment = document.getElementById("stat-derailment");
+    const statGlitched = document.getElementById("stat-glitched");
+    const statHistoryLen = document.getElementById("stat-history-len");
+    const statLatency = document.getElementById("stat-latency");
+
+    // Load available scenarios
+    async function loadScenarios() {
+      try {
+        const res = await fetch("/api/scenarios");
+        const data = await res.json();
+        scenarioSelect.innerHTML = "";
+
+        // Add special options
+        const freeOpt = document.createElement("option");
+        freeOpt.value = "free_mode";
+        freeOpt.textContent = "free_mode (Libre / Sans scénario)";
+        scenarioSelect.appendChild(freeOpt);
+
+        if (data.scenarios) {
+          data.scenarios.forEach(scen => {
+            const opt = document.createElement("option");
+            opt.value = scen.id;
+            opt.textContent = `${scen.id} (${scen.title || scen.id})`;
+            if (scen.id === "evaluation_turing") {
+              opt.selected = true;
+            }
+            scenarioSelect.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load scenarios:", err);
+      }
+    }
+
+    // Refresh live session stats
+    async function refreshSessionStats() {
+      const sessionId = sessionInput.value.trim();
+      statSession.textContent = sessionId;
+      statScenario.textContent = scenarioSelect.value;
+      if (!sessionId) return;
+
+      try {
+        const res = await fetch(`/api/debug/session/${encodeURIComponent(sessionId)}`);
+        const data = await res.json();
+        if (data.exists && data.session) {
+          const s = data.session;
+          statScenario.textContent = s.scenario_id || "-";
+          statStep.textContent = s.current_step_id || "-";
+          statCompliance.textContent = s.compliance_score !== undefined ? `${s.compliance_score}%` : "-";
+          statDerailment.textContent = s.derailment_count !== undefined ? s.derailment_count : "-";
+
+          if (s.is_glitched) {
+            statGlitched.textContent = "GLITCHED";
+            statGlitched.className = "stat-val badge badge-red";
+          } else {
+            statGlitched.textContent = "NORMAL";
+            statGlitched.className = "stat-val badge badge-green";
+          }
+
+          statHistoryLen.textContent = (s.history ? s.history.length : 0);
+        } else {
+          statStep.textContent = "(session non initialisée)";
+          statCompliance.textContent = "-";
+          statDerailment.textContent = "-";
+          statGlitched.textContent = "-";
+          statGlitched.className = "stat-val badge";
+          statHistoryLen.textContent = "0";
+        }
+      } catch (err) {
+        console.warn("Could not inspect session:", err);
+      }
+    }
+
+    // Append User Turn to DOM
+    function appendUserTurn(text, imageDataUrl) {
+      const card = document.createElement("div");
+      card.className = "turn-card user-turn";
+
+      const imgHtml = imageDataUrl ? `
+        <div style="margin-bottom:6px;">
+          <img src="${imageDataUrl}" style="max-height:120px; border-radius:4px; border:1px solid var(--border);" alt="attached">
+        </div>
+      ` : "";
+
+      card.innerHTML = `
+        <div class="turn-header">
+          <span style="color:var(--accent); font-weight:700;">👤 USER</span>
+          <span>${new Date().toLocaleTimeString()}</span>
+        </div>
+        <div class="turn-body">
+          ${imgHtml}
+          <div class="content-box">${escapeHtml(text)}</div>
+        </div>
+      `;
+      messagesList.appendChild(card);
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    // Append Assistant Turn to DOM
+    function appendAssistantTurn(bundle, latencyMs) {
+      const card = document.createElement("div");
+      card.className = "turn-card assistant-turn";
+
+      const timeStr = new Date().toLocaleTimeString();
+      const st = bundle.scenario_state || {};
+
+      // Thought block
+      const thoughtHtml = bundle.thought ? `
+        <div class="thought-box">
+          <div style="font-weight:700; color:var(--pink); margin-bottom:2px;">💭 REASONING THOUGHT:</div>
+          ${escapeHtml(bundle.thought)}
+        </div>
+      ` : "";
+
+      // Tool Call block
+      let toolHtml = "";
+      if (bundle.tool_call) {
+        const tc = bundle.tool_call;
+        toolHtml = `
+          <div class="tool-box">
+            <div style="color:var(--accent); font-weight:700; margin-bottom:2px;">⚙️ TOOL: ${escapeHtml(tc.name || "unknown")}</div>
+            <div style="color:var(--text-muted);">Arguments: ${escapeHtml(JSON.stringify(tc.arguments || {}))}</div>
+            ${tc.result ? `<div style="margin-top:4px; color:#fff;">Result: ${escapeHtml(String(tc.result))}</div>` : ""}
+          </div>
+        `;
+      }
+
+      // Suggestions chips
+      let suggestionsHtml = "";
+      if (bundle.suggestions && bundle.suggestions.length > 0) {
+        suggestionsHtml = `
+          <div style="margin-top:4px;">
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:2px;">Suggestions cliquables :</div>
+            <div class="suggestions-list">
+              ${bundle.suggestions.map(s => `<button class="suggestion-chip" onclick="handleSuggestionClick('${escapeAttr(s)}')">${escapeHtml(s)}</button>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Scenario state badges
+      let badgesHtml = `<span class="badge badge-green">${latencyMs}ms</span>`;
+      if (st.step_id) badgesHtml += ` <span class="badge">Étape: ${escapeHtml(st.step_id)}</span>`;
+      if (st.compliance_score !== undefined) badgesHtml += ` <span class="badge">Compliance: ${st.compliance_score}%</span>`;
+      if (st.derailment_count !== undefined && st.derailment_count > 0) badgesHtml += ` <span class="badge badge-yellow">Derail: #${st.derailment_count}</span>`;
+      if (st.is_glitched) badgesHtml += ` <span class="badge badge-red">GLITCH ACTIVE</span>`;
+      if (st.is_finished) badgesHtml += ` <span class="badge badge-pink">SCENARIO FINI</span>`;
+      if (bundle.archetype) badgesHtml += ` <span class="badge badge-yellow">${escapeHtml(bundle.archetype)}</span>`;
+
+      // Collapsible raw JSON
+      const rawJsonStr = JSON.stringify(bundle, null, 2);
+
+      card.innerHTML = `
+        <div class="turn-header">
+          <span style="color:var(--pink); font-weight:700;">🤖 ASSISTANT (n00bi)</span>
+          <div>${badgesHtml}</div>
+        </div>
+        <div class="turn-body">
+          ${thoughtHtml}
+          ${toolHtml}
+          <div class="content-box">${escapeHtml(bundle.content || "(aucun contenu texte)")}</div>
+          ${suggestionsHtml}
+          <details class="raw-details">
+            <summary>Voir JSON brut retourné</summary>
+            <pre class="raw-json">${escapeHtml(rawJsonStr)}</pre>
+          </details>
+        </div>
+      `;
+
+      messagesList.appendChild(card);
+      messagesList.scrollTop = messagesList.scrollHeight;
+
+      // Update sidebar inspector
+      lastJsonView.textContent = rawJsonStr;
+      statLatency.textContent = `${latencyMs} ms`;
+    }
+
+    // Start / Initialize Scenario
+    async function initScenario() {
+      const scenarioId = scenarioSelect.value;
+      const sessionId = sessionInput.value.trim() || "debug_session";
+      const t0 = performance.now();
+
+      try {
+        const res = await fetch("/api/scenario/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scenario_id: scenarioId,
+            session_id: sessionId,
+            stream: false
+          })
+        });
+
+        const latency = Math.round(performance.now() - t0);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const bundle = await res.json();
+        localHistory = [];
+        messagesList.innerHTML = "";
+
+        appendAssistantTurn(bundle, latency);
+        refreshSessionStats();
+      } catch (err) {
+        alert("Erreur initialisation scénario : " + err.message);
+      }
+    }
+
+    // Send user message
+    async function sendMessage(forcedText = null) {
+      const text = (forcedText !== null ? forcedText : promptInput.value).trim();
+      const hasImage = !!attachedImageDataUrl;
+
+      if (!text && !hasImage) return;
+
+      const sessionId = sessionInput.value.trim() || "debug_session";
+      const scenarioId = scenarioSelect.value;
+
+      // Add user turn to UI
+      appendUserTurn(text || "(Photo jointe)", attachedImageDataUrl);
+
+      // Add to local message list
+      const userMsg = { role: "user", content: text };
+      if (attachedImageDataUrl) {
+        userMsg.image = attachedImageDataUrl;
+      }
+      localHistory.push(userMsg);
+
+      // Clear input
+      if (forcedText === null) {
+        promptInput.value = "";
+      }
+      const imageToSend = attachedImageDataUrl;
+      clearAttachedImage();
+
+      // Send to API with stream: false for instantaneous zero-delay response
+      const t0 = performance.now();
+      try {
+        btnSend.disabled = true;
+        btnSend.textContent = "...";
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: localHistory,
+            scenario_id: scenarioId,
+            session_id: sessionId,
+            image: imageToSend,
+            stream: false
+          })
+        });
+
+        const latency = Math.round(performance.now() - t0);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const bundle = await res.json();
+        localHistory.push({ role: "assistant", content: bundle.content || "" });
+
+        appendAssistantTurn(bundle, latency);
+        refreshSessionStats();
+      } catch (err) {
+        alert("Erreur requête : " + err.message);
+      } finally {
+        btnSend.disabled = false;
+        btnSend.textContent = "Envoyer ⚡";
+        promptInput.focus();
+      }
+    }
+
+    // Reset session on server
+    async function resetServerSession() {
+      const sessionId = sessionInput.value.trim();
+      const scenarioId = scenarioSelect.value;
+      if (!confirm(`Confirmer la réinitialisation de la session "${sessionId}" sur le serveur ?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/debug/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_id: sessionId,
+            scenario_id: scenarioId
+          })
+        });
+        if (res.ok) {
+          localHistory = [];
+          messagesList.innerHTML = `<div style="color:var(--green); text-align:center; padding:10px;">Session "${sessionId}" réinitialisée avec succès.</div>`;
+          refreshSessionStats();
+        }
+      } catch (err) {
+        alert("Erreur reset : " + err.message);
+      }
+    }
+
+    // Window global for suggestion click
+    window.handleSuggestionClick = function(text) {
+      sendMessage(text);
+    };
+
+    function clearAttachedImage() {
+      attachedImageDataUrl = null;
+      imageFileInput.value = "";
+      imagePreviewContainer.classList.add("hidden");
+      imagePreviewEl.src = "";
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "\\'");
+    }
+
+    // Event Listeners
+    btnSend.addEventListener("click", () => sendMessage());
+
+    promptInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    btnInitScenario.addEventListener("click", initScenario);
+    btnResetSession.addEventListener("click", resetServerSession);
+
+    btnClearChat.addEventListener("click", () => {
+      messagesList.innerHTML = "";
+      localHistory = [];
+    });
+
+    btnNewSession.addEventListener("click", () => {
+      const randId = "debug_" + Math.random().toString(36).substring(2, 8);
+      sessionInput.value = randId;
+      localHistory = [];
+      messagesList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:10px;">Nouvelle session "${randId}" prête.</div>`;
+      refreshSessionStats();
+    });
+
+    sessionInput.addEventListener("change", refreshSessionStats);
+    scenarioSelect.addEventListener("change", refreshSessionStats);
+
+    // Preset buttons click
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const text = btn.getAttribute("data-text");
+        promptInput.value = text;
+        promptInput.focus();
+      });
+    });
+
+    // Image handling
+    imageFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        attachedImageDataUrl = evt.target.result;
+        imagePreviewEl.src = attachedImageDataUrl;
+        imagePreviewName.textContent = file.name;
+        imagePreviewContainer.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    btnRemoveImage.addEventListener("click", clearAttachedImage);
+
+    // Paste image from clipboard support
+    document.addEventListener("paste", (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (const item of items) {
+        if (item.type.indexOf("image") === 0) {
+          const file = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            attachedImageDataUrl = evt.target.result;
+            imagePreviewEl.src = attachedImageDataUrl;
+            imagePreviewName.textContent = "image_clipboard.png";
+            imagePreviewContainer.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    });
+
+    btnCopyJson.addEventListener("click", () => {
+      navigator.clipboard.writeText(lastJsonView.textContent)
+        .then(() => alert("JSON copié dans le presse-papiers !"))
+        .catch(() => alert("Impossible de copier"));
+    });
+
+    // Init
+    loadScenarios().then(() => {
+      refreshSessionStats();
+    });
+  </script>
+</body>
+</html>
