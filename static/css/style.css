@@ -672,3 +672,61 @@ body.glitch-mode #camera-modal .camera-scan-line {
   animation: scanLaser 0.6s steps(6) infinite !important;
 }
 
+/* ========================================================= */
+/* DEBUG SLASH COMMANDS AUTOCOMPLETE                         */
+/* ========================================================= */
+
+#debug-autocomplete-menu {
+  animation: slideDownFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.debug-cmd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.debug-cmd-item:hover,
+.debug-cmd-item.active {
+  background-color: rgba(212, 7, 123, 0.15);
+  border: 1px solid rgba(212, 7, 123, 0.4);
+}
+
+.debug-cmd-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #f43f5e;
+  background-color: rgba(244, 63, 94, 0.12);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  font-size: 0.75rem;
+}
+
+.debug-cmd-desc {
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  flex: 1;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.glitch-mode #debug-autocomplete-menu {
+  background-color: #0b0404 !important;
+  border-color: #7f1d1d !important;
+}
+
+body.glitch-mode .debug-cmd-item.active {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+}
+
+

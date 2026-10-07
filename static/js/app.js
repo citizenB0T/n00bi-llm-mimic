@@ -86,6 +86,19 @@ class MimicApp {
     this.cameraErrorMsg = document.getElementById("camera-error-msg");
     this.cameraStream = null;
     this.cameraFacingMode = "user"; // "user" or "environment"
+
+    // Debug Slash Commands UI & Registry
+    this.debugAutocompleteMenu = document.getElementById("debug-autocomplete-menu");
+    this.debugCommandsList = document.getElementById("debug-commands-list");
+    this.selectedDebugIndex = -1;
+    this.activeDebugMatches = [];
+    this.registeredDebugCommands = [
+      { cmd: "/whereami", desc: "Géolocaliser la session (balise GPS ou passerelle IP)" },
+      { cmd: "/help", desc: "Catalogue des directives système autorisées" },
+      { cmd: "/stats", desc: "Télémétrie hardware & VRAM GPU économisée" },
+      { cmd: "/glitch", desc: "Forcer une brèche d'intrusion Kernel immédiate" },
+      { cmd: "/reset", desc: "Réinitialiser les scores et incidents du protocole" }
+    ];
   }
 
   initEvents() {
@@ -195,18 +208,33 @@ class MimicApp {
       }
     });
 
-    // Intercept click on locked chat form during glitch
+    // Intercept click on locked chat form during glitch (except debug autocomplete or kernel buttons)
     this.chatForm.addEventListener("click", (e) => {
-      if (this.isGlitched && !e.target.closest("button.kernel-cmd-btn")) {
-        this.triggerShakeGlitchEffect();
-        this.showKernelWarningHud();
+      if (this.isGlitched && !e.target.closest("button.kernel-cmd-btn") && !e.target.closest("#debug-autocomplete-menu")) {
+        const val = this.promptInput.value.trim();
+        if (!val.startsWith("/")) {
+          this.showKernelWarningHud();
+        }
       }
+    });
+
+    // Close debug autocomplete on click outside
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#debug-autocomplete-menu") && !e.target.closest("#prompt-input")) {
+        this.hideDebugAutocomplete();
+      }
+    });
+
+    // Prompt input listener for debug command autocomplete
+    this.promptInput.addEventListener("input", () => {
+      this.handleDebugAutocomplete(this.promptInput.value);
     });
 
     // Form submit
     this.chatForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (this.isGlitched) {
+      const val = this.promptInput.value.trim();
+      if (this.isGlitched && !val.startsWith("/")) {
         this.triggerShakeGlitchEffect();
         this.showKernelWarningHud();
         return;
@@ -216,21 +244,49 @@ class MimicApp {
 
     // Prompt input focus check
     this.promptInput.addEventListener("focus", () => {
-      if (this.isGlitched) {
-        this.triggerShakeGlitchEffect();
+      if (this.isGlitched && !this.promptInput.value.startsWith("/")) {
         this.showKernelWarningHud();
-        this.promptInput.blur();
       }
     });
 
-    // Enter to submit, Shift+Enter for newline (IME safe)
+    // Keydown handler: debug autocomplete navigation + submit
     this.promptInput.addEventListener("keydown", (e) => {
-      if (this.isGlitched) {
+      // Autocomplete navigation
+      if (this.debugAutocompleteMenu && !this.debugAutocompleteMenu.classList.contains("hidden")) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          this.selectedDebugIndex = (this.selectedDebugIndex + 1) % this.activeDebugMatches.length;
+          this.renderDebugAutocompleteList();
+          return;
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          this.selectedDebugIndex = (this.selectedDebugIndex - 1 + this.activeDebugMatches.length) % this.activeDebugMatches.length;
+          this.renderDebugAutocompleteList();
+          return;
+        } else if (e.key === "Tab" || (e.key === "Enter" && this.selectedDebugIndex >= 0)) {
+          e.preventDefault();
+          const targetCmd = this.activeDebugMatches[this.selectedDebugIndex >= 0 ? this.selectedDebugIndex : 0];
+          if (targetCmd) {
+            this.selectDebugCommand(targetCmd.cmd);
+            return;
+          }
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          this.hideDebugAutocomplete();
+          return;
+        }
+      }
+
+      const val = this.promptInput.value.trim();
+      const isDebugKey = e.key === "/" || val.startsWith("/");
+
+      if (this.isGlitched && !isDebugKey && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         this.triggerShakeGlitchEffect();
         this.showKernelWarningHud();
         return;
       }
+
       if (e.key === "Enter" && !e.shiftKey) {
         if (e.isComposing || e.keyCode === 229) return;
         e.preventDefault();
@@ -298,6 +354,7 @@ class MimicApp {
     this.isGlitched = false;
     this.enableGlitchInputLock(false);
     this.closeCamera();
+    this.hideDebugAutocomplete();
     this.clearSelectedImage();
     this.clearLog();
   }
@@ -334,7 +391,9 @@ class MimicApp {
     // Check if user has provided either text or image
     if (!rawText && !hasImage) return;
 
-    if (this.isGlitched && forcedText === null) {
+    const isDebugCmd = rawText.startsWith("/");
+
+    if (this.isGlitched && forcedText === null && !isDebugCmd) {
       this.triggerShakeGlitchEffect();
       this.showKernelWarningHud();
       return;
@@ -345,6 +404,15 @@ class MimicApp {
         this.abortController.abort();
       }
       return;
+    }
+
+    // Hide debug autocomplete menu if open
+    this.hideDebugAutocomplete();
+
+    // Acquire location data if executing /whereami
+    let metadata = null;
+    if (rawText.toLowerCase().startsWith("/whereami")) {
+      metadata = { location: await this.acquireLocationData() };
     }
 
     // Capture attached image before clearing preview
@@ -370,6 +438,9 @@ class MimicApp {
     if (attachedImageDataUrl) {
       userMsgObj.image = attachedImageDataUrl;
     }
+    if (metadata) {
+      userMsgObj.metadata = metadata;
+    }
     this.messages.push(userMsgObj);
 
     // Stream response
@@ -378,6 +449,7 @@ class MimicApp {
       payload: {
         messages: this.messages,
         image: attachedImageDataUrl,
+        metadata: metadata,
         speed: parseFloat(this.speedSelect.value) || 1.0,
         scenario_id: this.activeScenario,
         session_id: this.sessionId
@@ -653,10 +725,10 @@ class MimicApp {
 
   enableGlitchInputLock(isLocked) {
     if (isLocked) {
-      this.promptInput.readOnly = true;
-      this.promptInput.placeholder = "🔒 CANAL COMPROMIS — SAISIE MATÉRIELLE DÉSACTIVÉE";
-      this.sendBtn.disabled = true;
-      this.sendBtn.innerHTML = `<i data-lucide="lock" class="w-4 h-4 text-red-400"></i>`;
+      this.promptInput.readOnly = false;
+      this.promptInput.placeholder = "🔒 CANAL COMPROMIS — Tapez / pour une directive debug...";
+      this.sendBtn.disabled = false;
+      this.sendBtn.innerHTML = `<i data-lucide="terminal" class="w-4 h-4 text-red-400"></i>`;
       this.chatForm.classList.add("locked-glitch");
       if (window.lucide) lucide.createIcons();
     } else {
@@ -1020,6 +1092,176 @@ class MimicApp {
 
     this.closeCamera();
     this.promptInput.focus();
+  }
+
+  // =========================================================
+  // DEBUG SLASH COMMANDS & HYBRID GEOLOCATION (/WHEREAMI)
+  // =========================================================
+
+  handleDebugAutocomplete(inputValue) {
+    if (!inputValue.startsWith("/")) {
+      this.hideDebugAutocomplete();
+      return;
+    }
+
+    const query = inputValue.toLowerCase().trim();
+    this.activeDebugMatches = this.registeredDebugCommands.filter(item =>
+      item.cmd.toLowerCase().startsWith(query) || (query === "/" || item.cmd.includes(query.slice(1)))
+    );
+
+    if (this.activeDebugMatches.length === 0) {
+      this.hideDebugAutocomplete();
+      return;
+    }
+
+    this.renderDebugAutocompleteList();
+    this.showDebugAutocomplete();
+  }
+
+  renderDebugAutocompleteList() {
+    if (!this.debugCommandsList) return;
+    this.debugCommandsList.innerHTML = "";
+
+    this.activeDebugMatches.forEach((item, index) => {
+      const el = document.createElement("div");
+      el.className = `debug-cmd-item ${index === this.selectedDebugIndex ? "active" : ""}`;
+      el.innerHTML = `
+        <span class="debug-cmd-badge">${this.escapeHtml(item.cmd)}</span>
+        <span class="debug-cmd-desc">${this.escapeHtml(item.desc)}</span>
+      `;
+      el.addEventListener("click", () => {
+        this.selectDebugCommand(item.cmd);
+      });
+      this.debugCommandsList.appendChild(el);
+    });
+  }
+
+  selectDebugCommand(cmd) {
+    this.promptInput.value = cmd;
+    this.hideDebugAutocomplete();
+    this.promptInput.focus();
+    this.handleSubmit();
+  }
+
+  showDebugAutocomplete() {
+    if (this.debugAutocompleteMenu) {
+      this.debugAutocompleteMenu.classList.remove("hidden");
+    }
+  }
+
+  hideDebugAutocomplete() {
+    if (this.debugAutocompleteMenu) {
+      this.debugAutocompleteMenu.classList.add("hidden");
+    }
+    this.selectedDebugIndex = -1;
+    this.activeDebugMatches = [];
+  }
+
+  async acquireLocationData() {
+    // 1. Try browser HTML5 Geolocation (GPS) with a 3.5s timeout
+    const getGpsPosition = () => {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          return reject(new Error("Géolocalisation HTML5 non supportée"));
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve(pos),
+          err => reject(err),
+          { timeout: 3500, enableHighAccuracy: true, maximumAge: 60000 }
+        );
+      });
+    };
+
+    try {
+      const position = await getGpsPosition();
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      let city = "Secteur résolu";
+      let region = "";
+      let country = "";
+
+      // Reverse geocode via Nominatim with short 2s timeout
+      try {
+        const nomController = new AbortController();
+        const nomTimeout = setTimeout(() => nomController.abort(), 2000);
+        const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
+          signal: nomController.signal,
+          headers: { "Accept-Language": "fr" }
+        });
+        clearTimeout(nomTimeout);
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          const addr = nomData.address || {};
+          city = addr.city || addr.town || addr.village || addr.municipality || city;
+          region = addr.state || addr.region || "";
+          country = addr.country || "";
+        }
+      } catch (e) {
+        console.warn("Nominatim reverse geocode fallback:", e);
+      }
+
+      return {
+        lat: lat,
+        lon: lon,
+        accuracy: accuracy,
+        method: "gps",
+        city: city,
+        region: region,
+        country: country
+      };
+    } catch (gpsError) {
+      console.info("GPS geolocation unavailable or denied, falling back to IP:", gpsError);
+
+      // 2. Fallback to IP geolocation (no permission needed)
+      try {
+        const ipController = new AbortController();
+        const ipTimeout = setTimeout(() => ipController.abort(), 2500);
+        const ipRes = await fetch("https://ipwho.is/", { signal: ipController.signal });
+        clearTimeout(ipTimeout);
+        if (ipRes.ok) {
+          const ipData = await ipRes.json();
+          if (ipData.success !== false) {
+            return {
+              lat: ipData.latitude,
+              lon: ipData.longitude,
+              accuracy: 5000,
+              method: "ip",
+              city: ipData.city || "Ville détectée",
+              region: ipData.region || "",
+              country: ipData.country || "",
+              isp: (ipData.connection && ipData.connection.isp) || ipData.isp || ""
+            };
+          }
+        }
+      } catch (ipErr1) {
+        console.warn("Primary IP geolocation failed, attempting secondary ipapi.co:", ipErr1);
+      }
+
+      try {
+        const ip2Res = await fetch("https://ipapi.co/json/");
+        if (ip2Res.ok) {
+          const ip2Data = await ip2Res.json();
+          return {
+            lat: ip2Data.latitude,
+            lon: ip2Data.longitude,
+            accuracy: 8000,
+            method: "ip",
+            city: ip2Data.city || "Zone IP",
+            region: ip2Data.region || "",
+            country: ip2Data.country_name || "",
+            isp: ip2Data.org || ""
+          };
+        }
+      } catch (ipErr2) {
+        console.warn("Secondary IP geolocation failed:", ipErr2);
+      }
+
+      return {
+        error: "Permission GPS refusée et serveurs de relais IP inaccessibles."
+      };
+    }
   }
 
   escapeHtml(unsafe) {

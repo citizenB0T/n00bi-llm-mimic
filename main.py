@@ -42,6 +42,7 @@ class ChatMessage(BaseModel):
     role: str
     content: str
     image: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
@@ -50,6 +51,7 @@ class ChatRequest(BaseModel):
     scenario_id: Optional[str] = None
     session_id: Optional[str] = None
     image: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
     stream: Optional[bool] = True
 
 class ScenarioStartRequest(BaseModel):
@@ -130,13 +132,14 @@ async def chat_endpoint(payload: ChatRequest):
     last_msg = payload.messages[-1] if payload.messages else None
     user_prompt = last_msg.content if last_msg else ""
     image_data = payload.image or (last_msg.image if last_msg else None)
+    metadata = payload.metadata or (last_msg.metadata if last_msg else None)
     speed = payload.speed or 1.0
     scenario_id = payload.scenario_id
     session_id = payload.session_id or "default_session"
 
-    # Unified flow: All messages go through scenario_manager (with hybrid technical and multimodal vision support)
+    # Unified flow: All messages go through scenario_manager (with hybrid technical, vision, and debug support)
     scen_id = scenario_id if (scenario_id and scenario_id not in ("none", "free_mode")) else "evaluation_turing"
-    bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id, image_data=image_data)
+    bundle = scenario_manager.process_turn(session_id, user_prompt, scen_id, image_data=image_data, metadata=metadata)
 
     CUMULATIVE_STATS["requests_served"] += 1
 

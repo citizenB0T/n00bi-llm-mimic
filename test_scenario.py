@@ -1,3 +1,7 @@
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from engine.scenario_engine import scenario_manager
 
 def test_scenarios():
@@ -126,7 +130,52 @@ def test_scenarios():
     assert "flux d'image non masqué" in img_glitch_turn['content']
     assert img_glitch_turn['scenario_state']['is_glitched'] == True
 
-    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE, WIKIPÉDIA, KERNEL ET VISION ONT RÉUSSI !")
+    print("\n=== TEST 13: DIRECTIVES DEBUG (/WHEREAMI, /HELP, /STATS, /GLITCH) ===")
+    debug_session = "test_debug_session"
+    scenario_manager.get_initial_turn(debug_session, scen_id)
+
+    # 1. /whereami with GPS metadata
+    gps_meta = {
+        "location": {
+            "lat": 50.4674,
+            "lon": 4.8719,
+            "accuracy": 12.5,
+            "method": "gps",
+            "city": "Namur",
+            "region": "Wallonie",
+            "country": "Belgique"
+        }
+    }
+    where_turn = scenario_manager.process_turn(debug_session, "/whereami", scen_id, metadata=gps_meta)
+    print(f"Réponse /whereami (GPS) :\n{where_turn['content'][:300]}...")
+    assert "Télémétrie Spatio-Temporelle" in where_turn['content']
+    assert "Namur" in where_turn['content']
+    assert "Belgique" in where_turn['content']
+    assert "openstreetmap.org" in where_turn['content']
+    assert where_turn['scenario_state']['is_glitched'] == False
+
+    # 2. /help
+    help_turn = scenario_manager.process_turn(debug_session, "/help", scen_id)
+    assert "/whereami" in help_turn['content']
+    assert "/stats" in help_turn['content']
+    assert "/glitch" in help_turn['content']
+
+    # 3. /stats
+    stats_turn = scenario_manager.process_turn(debug_session, "/stats", scen_id)
+    assert "Score de conformité sujet" in stats_turn['content']
+    assert "0.00 Mo" in stats_turn['content']
+
+    # 4. /whereami during Kernel Glitch (Must operate neutrally without block, A4 requirement)
+    glitch_turn = scenario_manager.process_turn(debug_session, "/glitch", scen_id)
+    assert glitch_turn['scenario_state']['is_glitched'] == True
+    assert scenario_manager.get_session(debug_session, scen_id)['is_glitched'] == True
+    where_glitch_turn = scenario_manager.process_turn(debug_session, "/whereami", scen_id, metadata=gps_meta)
+    print(f"Réponse /whereami en plein glitch (Neutre & Opérationnelle) :\n{where_glitch_turn['content'][:250]}...")
+    assert "Télémétrie Spatio-Temporelle" in where_glitch_turn['content']
+    assert "Namur" in where_glitch_turn['content']
+
+    print("\n[SUCCESS] TOUS LES TESTS DE PROTOCOLE UNIFIÉ, PIRATAGE, HYBRIDE, WIKIPÉDIA, KERNEL, VISION ET DIRECTIVES DEBUG ONT RÉUSSI !")
 
 if __name__ == "__main__":
     test_scenarios()
+

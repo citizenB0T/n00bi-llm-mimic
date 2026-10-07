@@ -270,6 +270,20 @@
           </div>
         </div>
 
+        <!-- Debug Commands Autocomplete Dropdown -->
+        <div id="debug-autocomplete-menu" class="hidden mb-2 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md p-2 transition-all">
+          <div class="px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-800 pb-1.5 mb-1">
+            <span class="flex items-center gap-1.5 text-pink-400 font-semibold">
+              <i data-lucide="terminal" class="w-3 h-3 text-[#d4077b]"></i>
+              <span>Directives de Maintenance</span>
+            </span>
+            <span class="text-[9px] text-slate-400 font-sans">↑↓ naviguer • Tab / Entrée insérer</span>
+          </div>
+          <div id="debug-commands-list" class="max-h-48 overflow-y-auto space-y-1">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
         <!-- Image Preview Bar (Appears when image is selected via mobile or PC) -->
         <div id="image-preview-bar" class="hidden mb-2 p-2 bg-white border border-slate-200 rounded-2xl flex items-center gap-3 shadow-xs">
           <div class="relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-100 flex items-center justify-center">
@@ -433,8 +447,8 @@
   </div>
 
   <!-- App Javascript -->
-  <script src="/static/js/ui.js?v=9"></script>
-  <script src="/static/js/app.js?v=9"></script>
+  <script src="/static/js/ui.js?v=10"></script>
+  <script src="/static/js/app.js?v=10"></script>
 </body>
 
 </html>

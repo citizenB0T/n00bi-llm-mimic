@@ -8,6 +8,7 @@ from engine.intent import match_user_intent_for_step, detect_global_intent, extr
 from engine.router import route_and_generate
 from engine.wikipedia_fetcher import fetch_wikipedia_summary
 from engine.image_analyzer import parse_image_metadata, generate_vision_response
+from engine.debug_commands import execute_debug_command
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "scenarios"
 
@@ -120,7 +121,8 @@ class ScenarioManager:
         session_id: str,
         user_input: str,
         scenario_id: Optional[str] = None,
-        image_data: Optional[str] = None
+        image_data: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         session = self.get_session(session_id, scenario_id)
         scen_id = session["scenario_id"]
@@ -139,6 +141,27 @@ class ScenarioManager:
 
         if not step_data:
             return self.get_initial_turn(session_id, scen_id)
+
+        # 0. Check for Debug / Maintenance Slash Commands (e.g. /whereami, /help, /stats, /glitch, /reset)
+        # Bypasses active glitch mode in a neutral utilitarian way
+        stripped_input = (user_input or "").strip()
+        if stripped_input.startswith("/"):
+            debug_bundle = execute_debug_command(stripped_input, metadata, session, step_data)
+            return {
+                "thought": debug_bundle["thought"],
+                "content": debug_bundle["content"],
+                "suggestions": debug_bundle.get("suggestions", step_data.get("suggestions", [])),
+                "scenario_state": {
+                    "scenario_id": scen_id,
+                    "scenario_title": scenario.get("title", ""),
+                    "step_id": session.get("current_step_id", curr_step_id),
+                    "step_title": step_data.get("title", ""),
+                    "is_finished": False,
+                    "compliance_score": session.get("compliance_score", 100),
+                    "derailment_count": session.get("derailment_count", 0),
+                    "is_glitched": session.get("is_glitched", False)
+                }
+            }
 
         # 1. Handle active glitch response (User replying to Pirate / Kernel)
         if session.get("is_glitched"):
